@@ -21,4 +21,4 @@ data Expr
     = BlockExpr [Expr]
     | CallExpr Expr [Expr]
     | NameExpr Name
-    | StringExpr String
+    | StringLiteralExpr String
