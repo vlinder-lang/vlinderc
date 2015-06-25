@@ -1,7 +1,5 @@
 module Language.Mill.AST where
 
-import Data.String (String)
-
 data ModuleName = ModuleName [String]
 
 data Name
