@@ -3,6 +3,13 @@ module Language.Mill.Lex
 
 , importKeyword
 , subKeyword
+
+, closingBrace
+, closingParenthesis
+, colon
+, comma
+, openingBrace
+, openingParenthesis
 ) where
 
 import Control.Applicative ((<$>), (<*), (<*>), (<|>))
@@ -32,3 +39,12 @@ keyword :: String -> Parser ()
 keyword kw = lexeme $ string kw >> notFollowedBy identifierTail
 importKeyword = keyword "import"
 subKeyword = keyword "sub"
+
+punctuation :: String -> Parser ()
+punctuation p = void . lexeme $ string p
+closingBrace = punctuation "}"
+closingParenthesis = punctuation ")"
+colon = punctuation ":"
+comma = punctuation ","
+openingBrace = punctuation "{"
+openingParenthesis = punctuation "("
