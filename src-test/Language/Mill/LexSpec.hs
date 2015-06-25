@@ -4,7 +4,7 @@ import Control.Applicative ((<*))
 import Control.Monad (forM_)
 import Data.Char (toUpper)
 import Data.Either (rights)
-import Language.Mill.Lex (identifier, importKeyword, subKeyword)
+import Language.Mill.Lex (identifier, importKeyword, stringLiteral, subKeyword)
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, parse)
 
@@ -35,3 +35,8 @@ spec = do
 
             it "does not lex something weird" $ do
                 rights [parse (keywordParser <* eof) "" "bullshit"] `shouldBe` []
+
+    describe "Language.Mill.Lex.stringLiteral" $ do
+        it "lexes string literals" $ do
+            forM_ ["", "a", "A B C"] $ \str -> do
+                rights [parse (stringLiteral <* eof) "" ("\"" ++ str ++ "\"")] `shouldBe` [str]

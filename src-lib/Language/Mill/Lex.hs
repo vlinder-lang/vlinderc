@@ -1,6 +1,8 @@
 module Language.Mill.Lex
 ( identifier
 
+, stringLiteral
+
 , importKeyword
 , subKeyword
 
@@ -12,9 +14,9 @@ module Language.Mill.Lex
 , openingParenthesis
 ) where
 
-import Control.Applicative ((<$>), (<*), (<*>), (<|>))
+import Control.Applicative ((<$>), (<*), (<*>), (*>), (<|>))
 import Control.Monad (void, when)
-import Text.Parsec (many, notFollowedBy, oneOf, string)
+import Text.Parsec (char, many, noneOf, notFollowedBy, oneOf, string)
 import Text.Parsec.String (Parser)
 
 lexeme :: Parser a -> Parser a
@@ -34,6 +36,9 @@ identifierHead = oneOf $ ['a'..'z'] ++ ['A'..'Z'] ++ ['_']
 
 identifierTail :: Parser String
 identifierTail = many (identifierHead <|> oneOf ['0'..'9'])
+
+stringLiteral :: Parser String
+stringLiteral = char '"' *> many (noneOf ['"']) <* char '"'
 
 keyword :: String -> Parser ()
 keyword kw = lexeme $ string kw >> notFollowedBy identifierTail
