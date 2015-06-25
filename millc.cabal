@@ -4,9 +4,21 @@ build-type:             Simple
 extra-source-files:     README.md
 cabal-version:          >=1.10
 
-
-executable millc
-    hs-source-dirs:     src
-    main-is:            Main.hs
+library
+    hs-source-dirs:     src-lib
+    exposed-modules:    Language.Mill.AST, Language.Mill.Lex
     default-language:   Haskell2010
     build-depends:      base, parsec
+
+executable millc
+    hs-source-dirs:     src-exec
+    main-is:            Main.hs
+    default-language:   Haskell2010
+    build-depends:      base, millc
+
+test-suite millc-test
+    type:               exitcode-stdio-1.0
+    hs-source-dirs:     src-test
+    main-is:            Main.hs
+    default-language:   Haskell2010
+    build-depends:      base, hspec, millc, parsec
