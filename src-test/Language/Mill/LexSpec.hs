@@ -25,7 +25,7 @@ spec = do
             it ("lexes '" ++ keyword ++ "'") $ do
                 rights [parse keywordParser "" keyword] `shouldBe` [()]
 
-            it ("does not lax '" ++ keyword ++ "x'") $ do
+            it ("does not lex '" ++ keyword ++ "x'") $ do
                 rights [parse keywordParser "" (keyword ++ "x")] `shouldBe` []
 
             it "does not lex something weird" $ do
