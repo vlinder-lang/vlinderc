@@ -4,9 +4,14 @@ import Control.Applicative ((<*))
 import Control.Monad (forM_)
 import Data.Char (toUpper)
 import Data.Either (rights)
-import Language.Mill.Lex (identifier, importKeyword, stringLiteral, subKeyword)
+import Language.Mill.Lex (identifier, importKeyword, subKeyword, stringLiteral)
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, parse)
+
+-- TODO move this
+ucFirst :: String -> String
+ucFirst [] = []
+ucFirst (x : xs) = toUpper x : xs
 
 spec :: Spec
 spec = do
@@ -25,8 +30,8 @@ spec = do
             forM_ (map fst keywords) $ \id -> do
                 rights [parse (identifier <* eof) "" id] `shouldBe` []
 
-    forM_ keywords $ \(keyword @ (k : ks), keywordParser) -> do
-        describe ("Language.Mill.Lex.keyword" ++ (toUpper k : ks)) $ do
+    forM_ keywords $ \(keyword, keywordParser) -> do
+        describe ("Language.Mill.Lex.keyword" ++ ucFirst keyword) $ do
             it ("lexes '" ++ keyword ++ "'") $ do
                 rights [parse (keywordParser <* eof) "" keyword] `shouldBe` [()]
 
