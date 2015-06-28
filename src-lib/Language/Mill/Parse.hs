@@ -13,6 +13,7 @@ import Language.Mill.AST (Name(..), Parameter(..), ParameterList, Type(..), Decl
 typeName :: Parser Type
 typeName = do
   typeId <- identifier
+  -- currently, hardcode UnqualifiedName
   return $ NamedType (UnqualifiedName typeId)
 
 parameter :: Parser Parameter
@@ -20,15 +21,10 @@ parameter = do
   id <- identifier
   colon
   idType <- typeName
-  -- currently, hardcode UnqualifiedName
   return $ Parameter id idType
 
 parameterList :: Parser ParameterList
-parameterList = do
-  openingParenthesis
-  params <- sepBy parameter comma
-  closingParenthesis
-  return params
+parameterList = openingParenthesis *> sepBy parameter comma <* closingParenthesis
 
 -- dummy block for now
 blockStmt :: Parser Expr
