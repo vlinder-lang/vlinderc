@@ -1,5 +1,6 @@
 module Language.Mill.ParseSpec where
 
+import Control.Applicative ((<*))
 import Data.Either (rights)
 import Language.Mill.Parse (name, parameter, parameterList, blockStmt, subDecl)
 import Language.Mill.AST (ModuleName(..), Name(..), Type(..), Parameter(..), Decl(..), Expr(..))
@@ -18,7 +19,7 @@ spec = do
         rights [parse (name <* eof) "" "a"] `shouldBe` [UnqualifiedName "a"]
 
       it "parses qualified names" $ do
-        rights [parse (name <* eof) "" "a.b.c"] `shouldBe` [QualifiedName (ModuleName ["a", "b"]) "c"]  
+        rights [parse (name <* eof) "" "a.b.c"] `shouldBe` [QualifiedName (ModuleName ["a", "b"]) "c"]
 
     describe "Language.Mill.Lex.parameter" $ do
       it "parses a parameter with a type" $ do
