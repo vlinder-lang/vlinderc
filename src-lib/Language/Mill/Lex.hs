@@ -8,10 +8,12 @@ module Language.Mill.Lex
 
 , closingBrace
 , closingParenthesis
-, colon
-, comma
 , openingBrace
 , openingParenthesis
+
+, colon
+, comma
+, dot
 ) where
 
 import Control.Applicative ((<$>), (<*), (<*>), (*>), (<|>))
@@ -51,5 +53,6 @@ closingBrace = punctuation "}"
 closingParenthesis = punctuation ")"
 colon = punctuation ":"
 comma = punctuation ","
+dot = punctuation "."
 openingBrace = punctuation "{"
 openingParenthesis = punctuation "("
