@@ -1,21 +1,28 @@
 module Language.Mill.Parse
-( parameter
+( name
+, parameter
 , parameterList
 , blockStmt
 , subDecl
 ) where
 
 import Control.Applicative ((<*), (*>))
-import Text.Parsec (sepBy, sepEndBy)
+import Text.Parsec (sepBy, sepBy1, sepEndBy)
 import Text.Parsec.String (Parser)
-import Language.Mill.Lex (identifier, comma, colon, openingBrace, closingBrace, openingParenthesis, closingParenthesis, subKeyword)
-import Language.Mill.AST (Name(..), Parameter(..), ParameterList, Type(..), Decl(..), Expr(..))
+import Language.Mill.Lex (identifier, colon, comma, dot, openingBrace, closingBrace, openingParenthesis, closingParenthesis, subKeyword)
+import Language.Mill.AST (ModuleName(..), Name(..), Parameter(..), ParameterList, Type(..), Decl(..), Expr(..))
+
+name :: Parser Name
+name = do
+  parts <- sepBy1 identifier dot
+  return $ case parts of
+    [id] -> UnqualifiedName id 
+    xs -> QualifiedName (ModuleName $ init xs) (last xs)
 
 typeName :: Parser Type
 typeName = do
-  typeId <- identifier
-  -- currently, hardcode UnqualifiedName
-  return $ NamedType (UnqualifiedName typeId)
+  typeId <- name
+  return $ NamedType typeId
 
 parameter :: Parser Parameter
 parameter = do

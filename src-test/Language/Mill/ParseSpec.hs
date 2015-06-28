@@ -1,8 +1,8 @@
 module Language.Mill.ParseSpec where
 
 import Data.Either (rights)
-import Language.Mill.Parse (parameter, parameterList, blockStmt, subDecl)
-import Language.Mill.AST (Type(..), Name(..), Parameter(..), Decl(..), Expr(..))
+import Language.Mill.Parse (name, parameter, parameterList, blockStmt, subDecl)
+import Language.Mill.AST (ModuleName(..), Name(..), Type(..), Parameter(..), Decl(..), Expr(..))
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, parse)
 
@@ -13,6 +13,13 @@ makeType name = NamedType $ UnqualifiedName name
 
 spec :: Spec
 spec = do
+    describe "Language.Mill.Lex.name" $ do
+      it "parses unqualified names" $ do
+        rights [parse (name <* eof) "" "a"] `shouldBe` [UnqualifiedName "a"]
+
+      it "parses qualified names" $ do
+        rights [parse (name <* eof) "" "a.b.c"] `shouldBe` [QualifiedName (ModuleName ["a", "b"]) "c"]  
+
     describe "Language.Mill.Lex.parameter" $ do
       it "parses a parameter with a type" $ do
         rights [parse (parameter <* eof) "" "a: b"] `shouldBe` [Parameter "a" (NamedType $ UnqualifiedName "b")]
