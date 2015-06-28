@@ -5,7 +5,8 @@ module Language.Mill.Parse
 , subDecl
 ) where
 
-import Text.Parsec (sepBy)
+import Control.Applicative ((<*), (*>))
+import Text.Parsec (sepBy, sepEndBy)
 import Text.Parsec.String (Parser)
 import Language.Mill.Lex (identifier, comma, colon, openingBrace, closingBrace, openingParenthesis, closingParenthesis, subKeyword)
 import Language.Mill.AST (Name(..), Parameter(..), ParameterList, Type(..), Decl(..), Expr(..))
@@ -24,7 +25,7 @@ parameter = do
   return $ Parameter id idType
 
 parameterList :: Parser ParameterList
-parameterList = openingParenthesis *> sepBy parameter comma <* closingParenthesis
+parameterList = openingParenthesis *> sepEndBy parameter comma <* closingParenthesis
 
 -- dummy block for now
 blockStmt :: Parser Expr

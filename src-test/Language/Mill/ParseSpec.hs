@@ -27,8 +27,12 @@ spec = do
       it "parses a parameter list with multiple elements" $ do
         rights [parse (parameterList <* eof) "" "(a: b, c: d, e: f)"] `shouldBe` [[Parameter "a" (makeType "b"), Parameter "c" (makeType "d"), Parameter "e" (makeType "f")]]
 
+      it "allows a trailing comma" $ do
+        rights [parse (parameterList <* eof) "" "(a: b,)"] `shouldBe` [[Parameter "a" (makeType "b")]]
+
     describe "Language.Mill.Lex.blockStmt" $ do
       it "lexes an empty block" $ do
+        rights [parse (blockStmt <* eof) "" "{}"] `shouldBe` [BlockExpr []]
         rights [parse (blockStmt <* eof) "" "{ }"] `shouldBe` [BlockExpr []]
 
     describe "Language.Mill.Lex.subDecl" $ do
