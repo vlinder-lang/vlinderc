@@ -14,6 +14,7 @@ module Language.Mill.Lex
 , colon
 , comma
 , dot
+, fatArrow
 ) where
 
 import Control.Applicative ((<$>), (<*), (<*>), (*>), (<|>))
@@ -56,3 +57,4 @@ comma = punctuation ","
 dot = punctuation "."
 openingBrace = punctuation "{"
 openingParenthesis = punctuation "("
+fatArrow = punctuation "=>"
