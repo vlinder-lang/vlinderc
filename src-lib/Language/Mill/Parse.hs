@@ -1,11 +1,4 @@
-module Language.Mill.Parse
-( name
-, parameter
-, parameterList
-, expr
-, blockExpr
-, subDecl
-) where
+module Language.Mill.Parse where
 
 import Control.Applicative ((<$>), (<|>), (<*), (*>))
 import Text.Parsec (sepBy, sepBy1, sepEndBy, many)
