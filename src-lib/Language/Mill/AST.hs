@@ -1,18 +1,22 @@
 module Language.Mill.AST where
 
-newtype ModuleName = ModuleName [String] deriving (Eq, Show)
+newtype ModuleName = ModuleName [String]
+                     deriving (Eq, Show)
 
 data Name
     = UnqualifiedName String
     | QualifiedName ModuleName String
     deriving (Eq, Show)
 
-data Type = NamedType Name deriving (Eq, Show)
+data Type = NamedType Name
+            deriving (Eq, Show)
 
 type ParameterList = [Parameter]
-data Parameter = Parameter String Type deriving (Eq, Show)
+data Parameter = Parameter String Type
+                 deriving (Eq, Show)
 
-data Module = Module [Decl] deriving (Eq, Show)
+data Module = Module [Decl]
+              deriving (Eq, Show)
 
 data Decl
     = ImportDecl ModuleName
@@ -20,8 +24,10 @@ data Decl
     | ForeignSubDecl ForeignSource CallingConvention String ParameterList Type
     deriving (Eq, Show)
 
-newtype ForeignSource = ForeignSource String deriving (Eq, Show)
-newtype CallingConvention = CallingConvention Name deriving (Eq, Show)
+newtype ForeignSource = ForeignSource String
+                        deriving (Eq, Show)
+newtype CallingConvention = CallingConvention Name
+                            deriving (Eq, Show)
 
 data Expr
     = BlockExpr [Stmt]
