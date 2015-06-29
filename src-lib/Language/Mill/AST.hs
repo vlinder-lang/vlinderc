@@ -9,6 +9,7 @@ module Language.Mill.AST
 , Module(..)
 , Decl(..)
 , Expr(..)
+, Stmt(..)
 ) where
 
 data ModuleName = ModuleName [String]
@@ -35,8 +36,13 @@ data Decl
   deriving (Eq, Show)
 
 data Expr
-    = BlockExpr [Expr]
+    = BlockExpr [Stmt]
     | CallExpr Expr [Expr]
     | NameExpr Name
     | StringLiteralExpr String
   deriving (Eq, Show)
+
+data Stmt
+    = ExprStmt Expr
+    | DeclStmt Decl
+    deriving (Eq, Show)

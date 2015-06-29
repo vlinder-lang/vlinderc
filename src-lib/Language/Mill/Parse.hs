@@ -7,11 +7,11 @@ module Language.Mill.Parse
 , subDecl
 ) where
 
-import Control.Applicative ((<$>), (<*), (*>))
+import Control.Applicative ((<$>), (<|>), (<*), (*>))
 import Text.Parsec (sepBy, sepBy1, sepEndBy, many)
 import Text.Parsec.String (Parser)
 import Language.Mill.Lex
-import Language.Mill.AST (ModuleName(..), Name(..), Parameter(..), ParameterList, Type(..), Decl(..), Expr(..))
+import Language.Mill.AST
 
 name :: Parser Name
 name = do
@@ -37,7 +37,13 @@ expr :: Parser Expr
 expr = blockExpr
 
 blockExpr :: Parser Expr
-blockExpr = BlockExpr <$> (openingBrace *> many expr <* closingBrace)
+blockExpr = BlockExpr <$> (openingBrace *> many stmt <* closingBrace)
+
+stmt :: Parser Stmt
+stmt = (ExprStmt <$> expr) <|> (DeclStmt <$> decl)
+
+decl :: Parser Decl
+decl = subDecl
 
 subDecl :: Parser Decl
 subDecl = do
