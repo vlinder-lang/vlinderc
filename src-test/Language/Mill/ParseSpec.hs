@@ -2,7 +2,7 @@ module Language.Mill.ParseSpec where
 
 import Control.Applicative ((<*))
 import Data.Either (rights)
-import Language.Mill.Parse (name, parameter, parameterList, blockStmt, subDecl)
+import Language.Mill.Parse (name, parameter, parameterList, blockExpr, subDecl)
 import Language.Mill.AST (ModuleName(..), Name(..), Type(..), Parameter(..), Decl(..), Expr(..))
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, parse)
@@ -38,10 +38,10 @@ spec = do
       it "allows a trailing comma" $ do
         rights [parse (parameterList <* eof) "" "(a: b,)"] `shouldBe` [[Parameter "a" (makeType "b")]]
 
-    describe "Language.Mill.Lex.blockStmt" $ do
+    describe "Language.Mill.Lex.blockExpr" $ do
       it "lexes an empty block" $ do
-        rights [parse (blockStmt <* eof) "" "{}"] `shouldBe` [BlockExpr []]
-        rights [parse (blockStmt <* eof) "" "{ }"] `shouldBe` [BlockExpr []]
+        rights [parse (blockExpr <* eof) "" "{}"] `shouldBe` [BlockExpr []]
+        rights [parse (blockExpr <* eof) "" "{ }"] `shouldBe` [BlockExpr []]
 
     describe "Language.Mill.Lex.subDecl" $ do
       it "lexes an empty sub declaration" $ do
