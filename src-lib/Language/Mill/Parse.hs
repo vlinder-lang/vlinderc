@@ -36,7 +36,6 @@ parameterList = openingParenthesis *> parameter `sepEndBy` comma <* closingParen
 expr :: Parser Expr
 expr = blockExpr
 
--- dummy block for now
 blockExpr :: Parser Expr
 blockExpr = BlockExpr <$> (openingBrace *> many expr <* closingBrace)
 
