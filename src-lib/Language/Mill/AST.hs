@@ -11,6 +11,7 @@ data Name
 data Type
     = NamedType Name
     | SubType [Type] Type
+    | TupleType [Type]
     deriving (Eq, Show)
 
 type ParameterList = [Parameter]

@@ -23,7 +23,7 @@ import Text.Parsec (char, many, noneOf, notFollowedBy, oneOf, string, sepBy)
 import Text.Parsec.String (Parser)
 
 lexeme :: Parser a -> Parser a
-lexeme p = p <* many space
+lexeme p = many space *> p <* many space
 
 space :: Parser ()
 space = void $ oneOf [' ', '\n']
