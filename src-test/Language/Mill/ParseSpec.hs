@@ -2,8 +2,8 @@ module Language.Mill.ParseSpec where
 
 import Control.Applicative ((<*))
 import Data.Either (rights)
-import Language.Mill.Parse (name, parameter, parameterList, blockExpr, subDecl, type_)
-import Language.Mill.AST (ModuleName(..), Name(..), Type(..), Parameter(..), Decl(..), Expr(..))
+import Language.Mill.AST
+import Language.Mill.Parse
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, parse)
 
@@ -16,9 +16,25 @@ cType = NamedType $ UnqualifiedName "C"
 dType = NamedType $ UnqualifiedName "D"
 emptyBlock = BlockExpr []
 makeType name = NamedType $ UnqualifiedName name
+helloWorldSource = "import mill.log\n" ++
+                   "\n" ++
+                   "sub main(console: log.Logger): () {\n" ++
+                   "    log.info(console, \"Hello, world!\")" ++
+                   "}\n"
+helloWorldAST = Module [ ImportDecl (ModuleName ["mill", "log"])
+                       , SubDecl "main"
+                                 [Parameter "console" (NamedType (QualifiedName (ModuleName ["log"]) "Logger"))]
+                                 (TupleType [])
+                                 (BlockExpr [ExprStmt $ CallExpr (NameExpr (QualifiedName (ModuleName ["log"]) "info"))
+                                                                 [NameExpr (UnqualifiedName "console"), StringLiteralExpr "Hello, world!"]])
+                       ]
 
 spec :: Spec
 spec = do
+    describe "Language.Mill.Parse.module_" $ do
+      it "parses the hello world program" $ do
+        rights [parse module_ "" helloWorldSource] `shouldBe` [helloWorldAST]
+
     describe "Language.Mill.Parse.name" $ do
       it "parses unqualified names" $ do
         rights [parse (name <* eof) "" "a"] `shouldBe` [UnqualifiedName "a"]
@@ -53,6 +69,11 @@ spec = do
         rights [parse (type_ <* eof) "" "(A) => B"] `shouldBe` [SubType [aType] bType]
         rights [parse (type_ <* eof) "" "(A, B) => C"] `shouldBe` [SubType [aType, bType] cType]
         rights [parse (type_ <* eof) "" "(A, B) => (C) => D"] `shouldBe` [SubType [aType, bType] (SubType [cType] dType)]
+
+      it "parses tuple types" $ do
+        rights [parse (type_ <* eof) "" "()"] `shouldBe` [TupleType []]
+        rights [parse (type_ <* eof) "" "(A)"] `shouldBe` [TupleType [aType]]
+        rights [parse (type_ <* eof) "" "(A, B)"] `shouldBe` [TupleType [aType, bType]]
 
     describe "Language.Mill.Parse.blockExpr" $ do
       it "parses an empty block" $ do
