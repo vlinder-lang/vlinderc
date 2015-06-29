@@ -20,14 +20,24 @@ name = do
         [id] -> UnqualifiedName id
         xs -> QualifiedName (ModuleName $ init xs) (last xs)
 
-typeName :: Parser Type
-typeName = NamedType <$> name
+type_ :: Parser Type
+type_ = namedType <|> subType
+
+namedType :: Parser Type
+namedType = NamedType <$> name
+
+subType :: Parser Type
+subType = do
+    parameterTypes <- (openingParenthesis *> type_ `sepEndBy` comma <* closingParenthesis)
+    fatArrow
+    returnType <- type_
+    return $ SubType parameterTypes returnType
 
 parameter :: Parser Parameter
 parameter = do
     id <- identifier
     colon
-    idType <- typeName
+    idType <- type_
     return $ Parameter id idType
 
 parameterList :: Parser ParameterList
@@ -51,6 +61,6 @@ subDecl = do
     id <- identifier
     params <- parameterList
     colon
-    retType <- typeName
+    retType <- type_
     body <- blockExpr
     return $ SubDecl id params retType body

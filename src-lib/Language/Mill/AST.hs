@@ -8,8 +8,10 @@ data Name
     | QualifiedName ModuleName String
     deriving (Eq, Show)
 
-data Type = NamedType Name
-            deriving (Eq, Show)
+data Type
+    = NamedType Name
+    | SubType [Type] Type
+    deriving (Eq, Show)
 
 type ParameterList = [Parameter]
 data Parameter = Parameter String Type

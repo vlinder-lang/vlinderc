@@ -9,6 +9,7 @@ import Text.Parsec (eof, parse)
 
 -- TODO move these
 voidType = NamedType $ UnqualifiedName "Void"
+exampleSubType = SubType [(NamedType (UnqualifiedName "A")), (NamedType (UnqualifiedName "B"))] (NamedType (UnqualifiedName "C"))
 emptyBlock = BlockExpr []
 makeType name = NamedType $ UnqualifiedName name
 
@@ -48,4 +49,4 @@ spec = do
         rights [parse (subDecl <* eof) "" "sub foo(): Void { }"] `shouldBe` [SubDecl "foo" [] voidType emptyBlock]
 
       it "lexes an sub declaration with a parameter" $ do
-        rights [parse (subDecl <* eof) "" "sub foo(a: b): Void { }"] `shouldBe` [SubDecl "foo" [Parameter "a" (makeType "b")] voidType emptyBlock]
+        rights [parse (subDecl <* eof) "" "sub foo(a: b): (A, B) => C { }"] `shouldBe` [SubDecl "foo" [Parameter "a" (makeType "b")] exampleSubType emptyBlock]
