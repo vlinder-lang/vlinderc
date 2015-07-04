@@ -26,7 +26,11 @@ data Decl
     | SubDecl String ParameterList Type Expr
     | ForeignSubDecl ForeignSource CallingConvention String ParameterList Type
     | AliasDecl String Type
+    | StructDecl String [Field]
     deriving (Eq, Show)
+
+data Field = Field String Type
+             deriving (Eq, Show)
 
 newtype ForeignSource = ForeignSource String
                         deriving (Eq, Show)

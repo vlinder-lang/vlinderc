@@ -71,7 +71,7 @@ stmt :: Parser Stmt
 stmt = (ExprStmt <$> expr) <|> (DeclStmt <$> decl)
 
 decl :: Parser Decl
-decl = aliasDecl <|> importDecl <|> subDecl
+decl = aliasDecl <|> importDecl <|> try structDecl <|> subDecl
 
 aliasDecl :: Parser Decl
 aliasDecl = do
@@ -83,6 +83,18 @@ aliasDecl = do
 
 importDecl :: Parser Decl
 importDecl = ImportDecl . ModuleName <$> (importKeyword *> identifier `sepBy1` dot)
+
+structDecl :: Parser Decl
+structDecl = do
+    structKeyword
+    name <- identifier
+    openingBrace
+    fields <- many field
+    closingBrace
+    return $ StructDecl name fields
+    where
+        field :: Parser Field
+        field = Field <$> identifier <*> (colon *> type_)
 
 subDecl :: Parser Decl
 subDecl = do

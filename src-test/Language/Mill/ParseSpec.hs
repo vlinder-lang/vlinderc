@@ -84,6 +84,12 @@ spec = do
       it "parses alias decls" $ do
         rights [parse (aliasDecl <* eof) "" "alias T = (A, B) => C"] `shouldBe` [AliasDecl "T" exampleSubType]
 
+    describe "Language.Mill.Parse.structDecl" $ do
+      it "parses struct decls" $ do
+        rights [parse (structDecl <* eof) "" "struct T { }"] `shouldBe` [StructDecl "T" []]
+        rights [parse (structDecl <* eof) "" "struct T { x: A }"] `shouldBe` [StructDecl "T" [Field "x" aType]]
+        rights [parse (structDecl <* eof) "" "struct T { x: A y: B }"] `shouldBe` [StructDecl "T" [Field "x" aType, Field "y" bType]]
+
     describe "Language.Mill.Parse.subDecl" $ do
       it "parses an empty sub declaration" $ do
         rights [parse (subDecl <* eof) "" "sub foo(): Void { }"] `shouldBe` [SubDecl "foo" [] voidType emptyBlock]
