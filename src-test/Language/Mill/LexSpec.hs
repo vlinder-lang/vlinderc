@@ -4,7 +4,7 @@ import Control.Applicative ((<*))
 import Control.Monad (forM_)
 import Data.Char (toUpper)
 import Data.Either (rights)
-import Language.Mill.Lex (aliasKeyword, identifier, importKeyword, subKeyword, stringLiteral)
+import Language.Mill.Lex
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, parse)
 
@@ -15,7 +15,7 @@ ucFirst (x : xs) = toUpper x : xs
 
 spec :: Spec
 spec = do
-    let keywords = [("alias", aliasKeyword), ("import", importKeyword), ("sub", subKeyword)]
+    let keywords = [("alias", aliasKeyword), ("import", importKeyword), ("struct", structKeyword), ("sub", subKeyword)]
 
     describe "Language.Mill.Lex.identifier" $ do
         it "lexes one-character identifiers" $ do
