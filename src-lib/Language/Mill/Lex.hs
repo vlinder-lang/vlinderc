@@ -3,6 +3,7 @@ module Language.Mill.Lex
 
 , stringLiteral
 
+, aliasKeyword
 , importKeyword
 , subKeyword
 
@@ -15,6 +16,7 @@ module Language.Mill.Lex
 , comma
 , dot
 , fatArrow
+, equalsSign
 ) where
 
 import Control.Applicative ((<$>), (<*), (<*>), (*>), (<|>))
@@ -31,7 +33,7 @@ space = void $ oneOf [' ', '\n']
 identifier :: Parser String
 identifier = lexeme $ do
     id <- (:) <$> identifierHead <*> identifierTail
-    when (id `elem` ["import", "sub"]) $ fail "identifier"
+    when (id `elem` ["alias", "import", "sub"]) $ fail "identifier"
     return id
 
 identifierHead :: Parser Char
@@ -45,6 +47,7 @@ stringLiteral = char '"' *> many (noneOf ['"']) <* char '"'
 
 keyword :: String -> Parser ()
 keyword kw = lexeme $ string kw >> notFollowedBy identifierTail
+aliasKeyword = keyword "alias"
 importKeyword = keyword "import"
 subKeyword = keyword "sub"
 
@@ -58,3 +61,4 @@ dot = punctuation "."
 openingBrace = punctuation "{"
 openingParenthesis = punctuation "("
 fatArrow = punctuation "=>"
+equalsSign = punctuation "=" >> notFollowedBy (char '>')

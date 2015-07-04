@@ -1,6 +1,6 @@
 module Language.Mill.Parse where
 
-import Control.Applicative ((<$>), (<|>), (<*), (*>))
+import Control.Applicative ((<$>), (<|>), (<*), (<*>), (*>))
 import Data.List (foldl')
 import Text.Parsec (eof, sepBy, sepBy1, try, sepEndBy, many)
 import Text.Parsec.String (Parser)
@@ -71,7 +71,15 @@ stmt :: Parser Stmt
 stmt = (ExprStmt <$> expr) <|> (DeclStmt <$> decl)
 
 decl :: Parser Decl
-decl = importDecl <|> subDecl
+decl = aliasDecl <|> importDecl <|> subDecl
+
+aliasDecl :: Parser Decl
+aliasDecl = do
+    aliasKeyword
+    name <- identifier
+    equalsSign
+    original <- type_
+    return $ AliasDecl name original
 
 importDecl :: Parser Decl
 importDecl = ImportDecl . ModuleName <$> (importKeyword *> identifier `sepBy1` dot)

@@ -80,6 +80,10 @@ spec = do
         rights [parse (blockExpr <* eof) "" "{}"] `shouldBe` [BlockExpr []]
         rights [parse (blockExpr <* eof) "" "{ }"] `shouldBe` [BlockExpr []]
 
+    describe "Language.Mill.Parse.aliasDecl" $ do
+      it "parses alias decls" $ do
+        rights [parse (aliasDecl <* eof) "" "alias T = (A, B) => C"] `shouldBe` [AliasDecl "T" exampleSubType]
+
     describe "Language.Mill.Parse.subDecl" $ do
       it "parses an empty sub declaration" $ do
         rights [parse (subDecl <* eof) "" "sub foo(): Void { }"] `shouldBe` [SubDecl "foo" [] voidType emptyBlock]

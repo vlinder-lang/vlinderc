@@ -25,6 +25,7 @@ data Decl
     = ImportDecl ModuleName
     | SubDecl String ParameterList Type Expr
     | ForeignSubDecl ForeignSource CallingConvention String ParameterList Type
+    | AliasDecl String Type
     deriving (Eq, Show)
 
 newtype ForeignSource = ForeignSource String
