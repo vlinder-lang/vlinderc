@@ -16,6 +16,7 @@ module Language.Mill.Lex
 , comma
 , dot
 , fatArrow
+, equalsSign
 ) where
 
 import Control.Applicative ((<$>), (<*), (<*>), (*>), (<|>))
@@ -60,3 +61,4 @@ dot = punctuation "."
 openingBrace = punctuation "{"
 openingParenthesis = punctuation "("
 fatArrow = punctuation "=>"
+equalsSign = punctuation "=" >> notFollowedBy (char '>')
