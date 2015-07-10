@@ -14,6 +14,10 @@ aType = NamedType $ UnqualifiedName "A"
 bType = NamedType $ UnqualifiedName "B"
 cType = NamedType $ UnqualifiedName "C"
 dType = NamedType $ UnqualifiedName "D"
+stringFoo = StringLiteralExpr "foo"
+stringBar = StringLiteralExpr "bar"
+abcQualifiedName = QualifiedName (ModuleName ["a", "b"]) "c"
+abcType = NamedType abcQualifiedName
 emptyBlock = BlockExpr []
 makeType name = NamedType $ UnqualifiedName name
 helloWorldSource = "import mill.log\n" ++
@@ -40,7 +44,7 @@ spec = do
         rights [parse (name <* eof) "" "a"] `shouldBe` [UnqualifiedName "a"]
 
       it "parses qualified names" $ do
-        rights [parse (name <* eof) "" "a.b.c"] `shouldBe` [QualifiedName (ModuleName ["a", "b"]) "c"]
+        rights [parse (name <* eof) "" "a.b.c"] `shouldBe` [abcQualifiedName]
 
     describe "Language.Mill.Parse.parameter" $ do
       it "parses a parameter with a type" $ do
@@ -89,6 +93,17 @@ spec = do
         rights [parse (structDecl <* eof) "" "struct T { }"] `shouldBe` [StructDecl "T" []]
         rights [parse (structDecl <* eof) "" "struct T { x: A }"] `shouldBe` [StructDecl "T" [Field "x" aType]]
         rights [parse (structDecl <* eof) "" "struct T { x: A y: B }"] `shouldBe` [StructDecl "T" [Field "x" aType, Field "y" bType]]
+
+    describe "Language.Mill.Parse.structLitExpr" $ do
+      it "parses an empty struct literal" $ do
+        rights [parse (structLitExpr <* eof) "" "A{}"] `shouldBe` [StructLiteralExpr aType []]
+
+      it "parses a struct literal with one value" $ do
+        rights [parse (structLitExpr <* eof) "" "A{foo: \"foo\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo]]
+
+      it "parses a struct literal with values" $ do
+        rights [parse (structLitExpr <* eof) "" "A{foo: \"foo\", bar :\"bar\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo, FieldValue "bar" stringBar]]
+
 
     describe "Language.Mill.Parse.subDecl" $ do
       it "parses an empty sub declaration" $ do

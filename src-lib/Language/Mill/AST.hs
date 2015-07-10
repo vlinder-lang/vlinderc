@@ -19,7 +19,18 @@ data Parameter = Parameter String Type
                  deriving (Eq, Show)
 
 data Module = Module [Decl]
-              deriving (Eq, Show)
+             deriving (Eq, Show)
+
+data Field = Field String Type
+             deriving (Eq, Show)
+
+data FieldValue = FieldValue String Expr
+                  deriving (Eq, Show)
+
+newtype ForeignSource = ForeignSource String
+                        deriving (Eq, Show)
+newtype CallingConvention = CallingConvention Name
+                            deriving (Eq, Show)
 
 data Decl
     = ImportDecl ModuleName
@@ -29,19 +40,12 @@ data Decl
     | StructDecl String [Field]
     deriving (Eq, Show)
 
-data Field = Field String Type
-             deriving (Eq, Show)
-
-newtype ForeignSource = ForeignSource String
-                        deriving (Eq, Show)
-newtype CallingConvention = CallingConvention Name
-                            deriving (Eq, Show)
-
 data Expr
     = BlockExpr [Stmt]
     | CallExpr Expr [Expr]
     | NameExpr Name
     | StringLiteralExpr String
+    | StructLiteralExpr Type [FieldValue]
     deriving (Eq, Show)
 
 data Stmt
