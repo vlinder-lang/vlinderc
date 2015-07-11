@@ -1,5 +1,7 @@
 module Language.Mill.Lex
-( identifier
+( Parser
+
+, identifier
 
 , stringLiteral
 
@@ -23,8 +25,9 @@ module Language.Mill.Lex
 
 import Control.Applicative ((<$>), (<*), (<*>), (*>), (<|>))
 import Control.Monad (void, when)
-import Text.Parsec (char, many, noneOf, notFollowedBy, oneOf, string, sepBy)
-import Text.Parsec.String (Parser)
+import Text.Parsec (Parsec, char, many, noneOf, notFollowedBy, oneOf, string, sepBy)
+
+type Parser = Parsec String Int
 
 lexeme :: Parser a -> Parser a
 lexeme p = many space *> p <* many space

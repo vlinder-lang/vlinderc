@@ -1,11 +1,11 @@
 module Language.Mill.Parse where
 
 import Control.Applicative ((<$>), (<|>), (<*), (<*>), (*>))
-import Data.List (foldl')
+import Control.Monad (foldM)
 import Text.Parsec (eof, sepBy, sepBy1, try, sepEndBy, many)
-import Text.Parsec.String (Parser)
 import Language.Mill.Lex
 import Language.Mill.AST
+import Language.Mill.AST.ID (newID, TypeID(..), DeclID(..), ExprID(..))
 
 module_ :: Parser Module
 module_ = Module <$> many decl <* eof
@@ -21,24 +21,25 @@ type_ :: Parser Type
 type_ = namedType <|> try subType <|> tupleType
 
 namedType :: Parser Type
-namedType = NamedType <$> name
+namedType = NamedType <$> newID <*> name
 
 subType :: Parser Type
 subType = do
+    id <- newID
     parameterTypes <- (openingParenthesis *> type_ `sepEndBy` comma <* closingParenthesis)
     fatArrow
     returnType <- type_
-    return $ SubType parameterTypes returnType
+    return $ SubType id parameterTypes returnType
 
 tupleType :: Parser Type
-tupleType = TupleType <$> (openingParenthesis *> type_ `sepEndBy` comma <* closingParenthesis)
+tupleType = TupleType <$> newID <*> (openingParenthesis *> type_ `sepEndBy` comma <* closingParenthesis)
 
 parameter :: Parser Parameter
 parameter = do
-    id <- identifier
+    name <- identifier
     colon
-    idType <- type_
-    return $ Parameter id idType
+    paramType <- type_
+    return $ Parameter name paramType
 
 parameterList :: Parser ParameterList
 parameterList = openingParenthesis *> parameter `sepEndBy` comma <* closingParenthesis
@@ -50,7 +51,7 @@ callExpr :: Parser Expr
 callExpr = do
     callee <- primaryExpr
     argumentLists <- many argumentList
-    return $ foldl' CallExpr callee argumentLists
+    foldM (\a b -> (\id -> CallExpr id a b) <$> newID) callee argumentLists
     where
         argumentList :: Parser [Expr]
         argumentList = openingParenthesis *> expr `sepEndBy` comma <* closingParenthesis
@@ -59,13 +60,13 @@ primaryExpr :: Parser Expr
 primaryExpr = nameExpr <|> stringLiteralExpr <|> blockExpr
 
 nameExpr :: Parser Expr
-nameExpr = NameExpr <$> name
+nameExpr = NameExpr <$> newID <*> name
 
 stringLiteralExpr :: Parser Expr
-stringLiteralExpr = StringLiteralExpr <$> stringLiteral
+stringLiteralExpr = StringLiteralExpr <$> newID <*> stringLiteral
 
 blockExpr :: Parser Expr
-blockExpr = BlockExpr <$> (openingBrace *> many stmt <* closingBrace)
+blockExpr = BlockExpr <$> newID <*> (openingBrace *> many stmt <* closingBrace)
 
 stmt :: Parser Stmt
 stmt = (ExprStmt <$> expr) <|> (DeclStmt <$> decl)
@@ -75,39 +76,46 @@ decl = aliasDecl <|> importDecl <|> try structDecl <|> subDecl <|> foreignSubDec
 
 aliasDecl :: Parser Decl
 aliasDecl = do
+    id <- newID
     aliasKeyword
     name <- identifier
     equalsSign
     original <- type_
-    return $ AliasDecl name original
+    return $ AliasDecl id name original
 
 importDecl :: Parser Decl
-importDecl = ImportDecl . ModuleName <$> (importKeyword *> identifier `sepBy1` dot)
+importDecl = do
+    id <- newID
+    moduleName <- ModuleName <$> (importKeyword *> identifier `sepBy1` dot)
+    return $ ImportDecl id moduleName
 
 structDecl :: Parser Decl
 structDecl = do
+    id <- newID
     structKeyword
     name <- identifier
     openingBrace
     fields <- many field
     closingBrace
-    return $ StructDecl name fields
+    return $ StructDecl id name fields
     where
         field :: Parser Field
         field = Field <$> identifier <*> (colon *> type_)
 
 subDecl :: Parser Decl
 subDecl = do
+    id <- newID
     subKeyword
-    id <- identifier
+    name <- identifier
     params <- parameterList
     colon
     retType <- type_
     body <- blockExpr
-    return $ SubDecl id params retType body
+    return $ SubDecl id name params retType body
 
 foreignSubDecl :: Parser Decl
 foreignSubDecl = do
+    id <- newID
     foreignKeyword
     library <- ForeignLibrary <$> stringLiteral
     subKeyword
@@ -116,4 +124,4 @@ foreignSubDecl = do
     params <- parameterList
     colon
     retType <- type_
-    return $ ForeignSubDecl library cconv name params retType
+    return $ ForeignSubDecl id library cconv name params retType
