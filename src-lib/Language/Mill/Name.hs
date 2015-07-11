@@ -13,7 +13,7 @@ import qualified Data.Set as Set
 import Data.Monoid (mconcat)
 import Language.Mill.AST
 import Language.Mill.AST.ID (ID)
-import Language.Mill.Module (ModuleName(..))
+import Language.Mill.Module (ModuleName(..), showModuleName)
 
 type NameResolving a = Either String a
 
@@ -109,10 +109,13 @@ resolveNamesInType ms st type_ = case type_ of
         return $ Map.singleton id (st Map.! name)
 
     NamedType id (QualifiedName unqualifiedModuleName name) ->
-        let (ModuleSymbol moduleName) = st Map.! unqualifiedModuleName
-            module_ = ms Map.! moduleName
-            Just declID = idForDeclInModule module_ name
-         in return $ Map.singleton id (DeclSymbol declID)
+        case unqualifiedModuleName `Map.lookup` st of
+            Just (ModuleSymbol moduleName) ->
+                case idForDeclInModule (ms Map.! moduleName) name of
+                    Just declID -> return $ Map.singleton id (DeclSymbol declID)
+                    Nothing -> failNotExported moduleName name
+            Just _ -> failNotAModule unqualifiedModuleName
+            Nothing -> failNotInScope unqualifiedModuleName
 
     SubType _ paramTypes returnType ->
         mconcat <$> mapM (resolveNamesInType ms st) (returnType : paramTypes)
@@ -138,3 +141,15 @@ idForDeclInModule (Module decls) name =
           declID (ForeignSubDecl id _ _ _ _ _) = id
           declID (AliasDecl id _ _) = id
           declID (StructDecl id _ _) = id
+
+failNotInScope :: String -> NameResolving a
+failNotInScope name = failWithMessage $ "name '" ++ name ++ "' is not in scope"
+
+failNotExported :: ModuleName -> String -> NameResolving a
+failNotExported moduleName name = failWithMessage $ "module '" ++ showModuleName moduleName ++ "' does not export name '" ++ name ++ "'"
+
+failNotAModule :: String -> NameResolving a
+failNotAModule name = failWithMessage $ "name '" ++ name ++ "' does not refer to an imported module"
+
+failWithMessage :: String -> NameResolving a
+failWithMessage = Left
