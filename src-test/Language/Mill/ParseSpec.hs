@@ -3,38 +3,36 @@ module Language.Mill.ParseSpec where
 import Control.Applicative ((<*))
 import Data.Either (rights)
 import Language.Mill.AST
-import Language.Mill.AST.ID (TypeID(..), DeclID(..), ExprID(..))
+import Language.Mill.AST.ID (ID(..))
 import Language.Mill.Module (ModuleName(..))
 import Language.Mill.Parse
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, runParser)
 
-typeID = TypeID (-1)
-declID = DeclID (-1)
-exprID = ExprID (-1)
+nodeID = ID (-1)
 
 -- TODO move these
-voidType = NamedType typeID (UnqualifiedName "Void")
-exampleSubType = SubType typeID [(NamedType typeID (UnqualifiedName "A")), (NamedType typeID (UnqualifiedName "B"))] (NamedType typeID (UnqualifiedName "C"))
-aType = NamedType typeID (UnqualifiedName "A")
-bType = NamedType typeID (UnqualifiedName "B")
-cType = NamedType typeID (UnqualifiedName "C")
-dType = NamedType typeID (UnqualifiedName "D")
-emptyBlock = BlockExpr exprID []
-makeType name = NamedType typeID (UnqualifiedName name)
+voidType = NamedType nodeID (UnqualifiedName "Void")
+exampleSubType = SubType nodeID [(NamedType nodeID (UnqualifiedName "A")), (NamedType nodeID (UnqualifiedName "B"))] (NamedType nodeID (UnqualifiedName "C"))
+aType = NamedType nodeID (UnqualifiedName "A")
+bType = NamedType nodeID (UnqualifiedName "B")
+cType = NamedType nodeID (UnqualifiedName "C")
+dType = NamedType nodeID (UnqualifiedName "D")
+emptyBlock = BlockExpr nodeID []
+makeType name = NamedType nodeID (UnqualifiedName name)
 helloWorldSource = "import mill.log\n" ++
                    "\n" ++
                    "sub main(console: log.Logger): () {\n" ++
                    "    log.info(console, \"Hello, world!\")" ++
                    "}\n"
-helloWorldAST = Module [ ImportDecl declID (ModuleName ["mill", "log"])
-                       , SubDecl declID
+helloWorldAST = Module [ ImportDecl nodeID (ModuleName ["mill", "log"])
+                       , SubDecl nodeID
                                  "main"
-                                 [Parameter "console" (NamedType typeID (QualifiedName "log" "Logger"))]
-                                 (TupleType typeID [])
-                                 (BlockExpr exprID [ExprStmt $ CallExpr exprID
-                                                                        (NameExpr exprID (QualifiedName "log" "info"))
-                                                                        [NameExpr exprID (UnqualifiedName "console"), StringLiteralExpr exprID "Hello, world!"]])
+                                 [Parameter nodeID "console" (NamedType nodeID (QualifiedName "log" "Logger"))]
+                                 (TupleType nodeID [])
+                                 (BlockExpr nodeID [ExprStmt $ CallExpr nodeID
+                                                                        (NameExpr nodeID (QualifiedName "log" "info"))
+                                                                        [NameExpr nodeID (UnqualifiedName "console"), StringLiteralExpr nodeID "Hello, world!"]])
                        ]
 
 spec :: Spec
@@ -52,58 +50,58 @@ spec = do
 
     describe "Language.Mill.Parse.parameter" $ do
       it "parses a parameter with a type" $ do
-        rights [runParser (parameter <* eof) 0 "" "a: b"] `shouldBe` [Parameter "a" (NamedType typeID (UnqualifiedName "b"))]
+        rights [runParser (parameter <* eof) 0 "" "a: b"] `shouldBe` [Parameter nodeID "a" (NamedType nodeID (UnqualifiedName "b"))]
 
     describe "Language.Mill.Parse.parameterList" $ do
       it "parses an empy parameter list" $ do
         rights [runParser (parameterList <* eof) 0 "" "()"] `shouldBe` [[]]
 
       it "parses a parameter list with a single element" $ do
-        rights [runParser (parameterList <* eof) 0 "" "(a: b)"] `shouldBe` [[Parameter "a" (makeType "b")]]
+        rights [runParser (parameterList <* eof) 0 "" "(a: b)"] `shouldBe` [[Parameter nodeID "a" (makeType "b")]]
 
       it "parses a parameter list with multiple elements" $ do
-        rights [runParser (parameterList <* eof) 0 "" "(a: b, c: d, e: f)"] `shouldBe` [[Parameter "a" (makeType "b"), Parameter "c" (makeType "d"), Parameter "e" (makeType "f")]]
+        rights [runParser (parameterList <* eof) 0 "" "(a: b, c: d, e: f)"] `shouldBe` [[Parameter nodeID "a" (makeType "b"), Parameter nodeID "c" (makeType "d"), Parameter nodeID "e" (makeType "f")]]
 
       it "allows a trailing comma" $ do
-        rights [runParser (parameterList <* eof) 0 "" "(a: b,)"] `shouldBe` [[Parameter "a" (makeType "b")]]
+        rights [runParser (parameterList <* eof) 0 "" "(a: b,)"] `shouldBe` [[Parameter nodeID "a" (makeType "b")]]
 
     describe "Language.Mill.Parse.type_" $ do
       it "parses named types" $ do
         rights [runParser (type_ <* eof) 0 "" "A"] `shouldBe` [aType]
-        rights [runParser (type_ <* eof) 0 "" "m.A"] `shouldBe` [NamedType typeID (QualifiedName "m" "A")]
+        rights [runParser (type_ <* eof) 0 "" "m.A"] `shouldBe` [NamedType nodeID (QualifiedName "m" "A")]
 
       it "parses sub types" $ do
-        rights [runParser (type_ <* eof) 0 "" "(A) => B"] `shouldBe` [SubType typeID [aType] bType]
-        rights [runParser (type_ <* eof) 0 "" "(A, B) => C"] `shouldBe` [SubType typeID [aType, bType] cType]
-        rights [runParser (type_ <* eof) 0 "" "(A, B) => (C) => D"] `shouldBe` [SubType typeID [aType, bType] (SubType typeID [cType] dType)]
+        rights [runParser (type_ <* eof) 0 "" "(A) => B"] `shouldBe` [SubType nodeID [aType] bType]
+        rights [runParser (type_ <* eof) 0 "" "(A, B) => C"] `shouldBe` [SubType nodeID [aType, bType] cType]
+        rights [runParser (type_ <* eof) 0 "" "(A, B) => (C) => D"] `shouldBe` [SubType nodeID [aType, bType] (SubType nodeID [cType] dType)]
 
       it "parses tuple types" $ do
-        rights [runParser (type_ <* eof) 0 "" "()"] `shouldBe` [TupleType typeID []]
-        rights [runParser (type_ <* eof) 0 "" "(A)"] `shouldBe` [TupleType typeID [aType]]
-        rights [runParser (type_ <* eof) 0 "" "(A, B)"] `shouldBe` [TupleType typeID [aType, bType]]
+        rights [runParser (type_ <* eof) 0 "" "()"] `shouldBe` [TupleType nodeID []]
+        rights [runParser (type_ <* eof) 0 "" "(A)"] `shouldBe` [TupleType nodeID [aType]]
+        rights [runParser (type_ <* eof) 0 "" "(A, B)"] `shouldBe` [TupleType nodeID [aType, bType]]
 
     describe "Language.Mill.Parse.blockExpr" $ do
       it "parses an empty block" $ do
-        rights [runParser (blockExpr <* eof) 0 "" "{}"] `shouldBe` [BlockExpr exprID []]
-        rights [runParser (blockExpr <* eof) 0 "" "{ }"] `shouldBe` [BlockExpr exprID []]
+        rights [runParser (blockExpr <* eof) 0 "" "{}"] `shouldBe` [BlockExpr nodeID []]
+        rights [runParser (blockExpr <* eof) 0 "" "{ }"] `shouldBe` [BlockExpr nodeID []]
 
     describe "Language.Mill.Parse.aliasDecl" $ do
       it "parses alias decls" $ do
-        rights [runParser (aliasDecl <* eof) 0 "" "alias T = (A, B) => C"] `shouldBe` [AliasDecl declID "T" exampleSubType]
+        rights [runParser (aliasDecl <* eof) 0 "" "alias T = (A, B) => C"] `shouldBe` [AliasDecl nodeID "T" exampleSubType]
 
     describe "Language.Mill.Parse.structDecl" $ do
       it "parses struct decls" $ do
-        rights [runParser (structDecl <* eof) 0 "" "struct T { }"] `shouldBe` [StructDecl declID "T" []]
-        rights [runParser (structDecl <* eof) 0 "" "struct T { x: A }"] `shouldBe` [StructDecl declID "T" [Field "x" aType]]
-        rights [runParser (structDecl <* eof) 0 "" "struct T { x: A y: B }"] `shouldBe` [StructDecl declID "T" [Field "x" aType, Field "y" bType]]
+        rights [runParser (structDecl <* eof) 0 "" "struct T { }"] `shouldBe` [StructDecl nodeID "T" []]
+        rights [runParser (structDecl <* eof) 0 "" "struct T { x: A }"] `shouldBe` [StructDecl nodeID "T" [Field "x" aType]]
+        rights [runParser (structDecl <* eof) 0 "" "struct T { x: A y: B }"] `shouldBe` [StructDecl nodeID "T" [Field "x" aType, Field "y" bType]]
 
     describe "Language.Mill.Parse.subDecl" $ do
       it "parses an empty sub declaration" $ do
-        rights [runParser (subDecl <* eof) 0 "" "sub foo(): Void { }"] `shouldBe` [SubDecl declID "foo" [] voidType emptyBlock]
+        rights [runParser (subDecl <* eof) 0 "" "sub foo(): Void { }"] `shouldBe` [SubDecl nodeID "foo" [] voidType emptyBlock]
 
       it "parses an sub declaration with a parameter" $ do
-        rights [runParser (subDecl <* eof) 0 "" "sub foo(a: b): (A, B) => C { }"] `shouldBe` [SubDecl declID "foo" [Parameter "a" (makeType "b")] exampleSubType emptyBlock]
+        rights [runParser (subDecl <* eof) 0 "" "sub foo(a: b): (A, B) => C { }"] `shouldBe` [SubDecl nodeID "foo" [Parameter nodeID "a" (makeType "b")] exampleSubType emptyBlock]
 
     describe "Language.Mill.Parse.foreignSubDecl" $ do
       it "parses foreign sub declarations" $ do
-        rights [runParser (foreignSubDecl <* eof) 0 "" "foreign \"./console.js\" sub ecmascript.returnCall info(message: String): ()"] `shouldBe` [ForeignSubDecl declID (ForeignLibrary "./console.js") (CallingConvention (QualifiedName "ecmascript" "returnCall")) "info" [Parameter "message" (NamedType typeID (UnqualifiedName "String"))] (TupleType typeID [])]
+        rights [runParser (foreignSubDecl <* eof) 0 "" "foreign \"./console.js\" sub ecmascript.returnCall info(message: String): ()"] `shouldBe` [ForeignSubDecl nodeID (ForeignLibrary "./console.js") (CallingConvention (QualifiedName "ecmascript" "returnCall")) "info" [Parameter nodeID "message" (NamedType nodeID (UnqualifiedName "String"))] (TupleType nodeID [])]

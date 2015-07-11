@@ -3,7 +3,7 @@ module Language.Mill.Parse where
 import Control.Applicative ((<$>), (<|>), (<*), (<*>), (*>))
 import Control.Monad (foldM)
 import Language.Mill.AST
-import Language.Mill.AST.ID (newID, TypeID(..), DeclID(..), ExprID(..))
+import Language.Mill.AST.ID (newID)
 import Language.Mill.Lex
 import Language.Mill.Module (ModuleName(..))
 import Text.Parsec (eof, sepBy, sepBy1, try, sepEndBy, many, optionMaybe)
@@ -38,10 +38,11 @@ tupleType = TupleType <$> newID <*> (openingParenthesis *> type_ `sepEndBy` comm
 
 parameter :: Parser Parameter
 parameter = do
+    id <- newID
     name <- identifier
     colon
     paramType <- type_
-    return $ Parameter name paramType
+    return $ Parameter id name paramType
 
 parameterList :: Parser ParameterList
 parameterList = openingParenthesis *> parameter `sepEndBy` comma <* closingParenthesis
