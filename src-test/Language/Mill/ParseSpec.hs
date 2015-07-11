@@ -111,3 +111,7 @@ spec = do
 
       it "parses an sub declaration with a parameter" $ do
         rights [parse (subDecl <* eof) "" "sub foo(a: b): (A, B) => C { }"] `shouldBe` [SubDecl "foo" [Parameter "a" (makeType "b")] exampleSubType emptyBlock]
+
+    describe "Language.Mill.Parse.foreignSubDecl" $ do
+      it "parses foreign sub declarations" $ do
+        rights [parse (foreignSubDecl <* eof) "" "foreign \"./console.js\" sub ecmascript.returnCall info(message: String): ()"] `shouldBe` [ForeignSubDecl (ForeignLibrary "./console.js") (CallingConvention (QualifiedName (ModuleName ["ecmascript"]) "returnCall")) "info" [Parameter "message" (NamedType (UnqualifiedName "String"))] (TupleType [])]

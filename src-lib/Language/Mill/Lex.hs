@@ -4,6 +4,7 @@ module Language.Mill.Lex
 , stringLiteral
 
 , aliasKeyword
+, foreignKeyword
 , importKeyword
 , structKeyword
 , subKeyword
@@ -49,6 +50,7 @@ stringLiteral = char '"' *> many (noneOf ['"']) <* char '"'
 keyword :: String -> Parser ()
 keyword kw = lexeme $ string kw >> notFollowedBy identifierTail
 aliasKeyword = keyword "alias"
+foreignKeyword = keyword "foreign"
 importKeyword = keyword "import"
 structKeyword = keyword "struct"
 subKeyword = keyword "sub"

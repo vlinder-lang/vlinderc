@@ -19,7 +19,7 @@ data Parameter = Parameter String Type
                  deriving (Eq, Show)
 
 data Module = Module [Decl]
-             deriving (Eq, Show)
+              deriving (Eq, Show)
 
 data Field = Field String Type
              deriving (Eq, Show)
@@ -27,8 +27,8 @@ data Field = Field String Type
 data FieldValue = FieldValue String Expr
                   deriving (Eq, Show)
 
-newtype ForeignSource = ForeignSource String
-                        deriving (Eq, Show)
+newtype ForeignLibrary = ForeignLibrary String
+                         deriving (Eq, Show)
 newtype CallingConvention = CallingConvention Name
                             deriving (Eq, Show)
 
