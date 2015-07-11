@@ -44,7 +44,7 @@ parameterList :: Parser ParameterList
 parameterList = openingParenthesis *> parameter `sepEndBy` comma <* closingParenthesis
 
 expr :: Parser Expr
-expr = callExpr <|> stringLiteralExpr
+expr = callExpr
 
 callExpr :: Parser Expr
 callExpr = do
@@ -70,8 +70,8 @@ blockExpr = BlockExpr <$> (openingBrace *> many stmt <* closingBrace)
 structLitExpr :: Parser Expr
 structLitExpr = StructLiteralExpr <$> type_ <*> (openingBrace *> fieldValue `sepBy` comma <* closingBrace)
     where
-        fieldValue :: Parser FieldValue 
-        fieldValue = FieldValue <$> identifier <*> (colon *> expr)
+        fieldValue :: Parser FieldValue
+        fieldValue = FieldValue <$> identifier <*> (colon *> primaryExpr)
 
 stmt :: Parser Stmt
 stmt = (ExprStmt <$> expr) <|> (DeclStmt <$> decl)
