@@ -61,6 +61,11 @@ resolveNamesInDecl st decl = case decl of
     AliasDecl id name aliasedType ->
         (Map.singleton name (DeclSymbol id), resolveNamesInType st aliasedType)
 
+    StructDecl id name fields ->
+        let resolvedNames =
+                mconcat $ map (\(Field _ t) -> resolveNamesInType st t) fields
+         in (Map.singleton name (DeclSymbol id), resolvedNames)
+
 resolveNamesInExpr :: SymbolTable -> Expr -> Map ID Symbol
 resolveNamesInExpr st expr = case expr of
     BlockExpr _ stmts -> runST $ do
