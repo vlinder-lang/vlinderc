@@ -4,6 +4,7 @@ module Language.Mill.Lex
 , stringLiteral
 
 , aliasKeyword
+, foreignKeyword
 , importKeyword
 , structKeyword
 , subKeyword
@@ -34,7 +35,7 @@ space = void $ oneOf [' ', '\n']
 identifier :: Parser String
 identifier = lexeme $ do
     id <- (:) <$> identifierHead <*> identifierTail
-    when (id `elem` ["alias", "import", "struct", "sub"]) $ fail "identifier"
+    when (id `elem` ["alias", "foreign", "import", "struct", "sub"]) $ fail "identifier"
     return id
 
 identifierHead :: Parser Char
@@ -49,6 +50,7 @@ stringLiteral = char '"' *> many (noneOf ['"']) <* char '"'
 keyword :: String -> Parser ()
 keyword kw = lexeme $ string kw >> notFollowedBy identifierTail
 aliasKeyword = keyword "alias"
+foreignKeyword = keyword "foreign"
 importKeyword = keyword "import"
 structKeyword = keyword "struct"
 subKeyword = keyword "sub"

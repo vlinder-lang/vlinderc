@@ -24,7 +24,7 @@ data Module = Module [Decl]
 data Decl
     = ImportDecl ModuleName
     | SubDecl String ParameterList Type Expr
-    | ForeignSubDecl ForeignSource CallingConvention String ParameterList Type
+    | ForeignSubDecl ForeignLibrary CallingConvention String ParameterList Type
     | AliasDecl String Type
     | StructDecl String [Field]
     deriving (Eq, Show)
@@ -32,8 +32,8 @@ data Decl
 data Field = Field String Type
              deriving (Eq, Show)
 
-newtype ForeignSource = ForeignSource String
-                        deriving (Eq, Show)
+newtype ForeignLibrary = ForeignLibrary String
+                         deriving (Eq, Show)
 newtype CallingConvention = CallingConvention Name
                             deriving (Eq, Show)
 
