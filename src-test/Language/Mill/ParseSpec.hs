@@ -111,7 +111,6 @@ spec = do
       it "parses a struct literal with values" $ do
         rights [runParser (structLitExpr <* eof) 0 "" "A{foo: \"foo\", bar :\"bar\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo, FieldValue "bar" stringBar]]
 
-
     describe "Language.Mill.Parse.subDecl" $ do
       it "parses an empty sub declaration" $ do
         rights [runParser (subDecl <* eof) 0 "" "sub foo(): Void { }"] `shouldBe` [SubDecl declID "foo" [] voidType emptyBlock]
