@@ -35,7 +35,7 @@ space = void $ oneOf [' ', '\n']
 identifier :: Parser String
 identifier = lexeme $ do
     id <- (:) <$> identifierHead <*> identifierTail
-    when (id `elem` ["alias", "import", "struct", "sub"]) $ fail "identifier"
+    when (id `elem` ["alias", "foreign", "import", "struct", "sub"]) $ fail "identifier"
     return id
 
 identifierHead :: Parser Char

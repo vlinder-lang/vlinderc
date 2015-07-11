@@ -15,7 +15,7 @@ ucFirst (x : xs) = toUpper x : xs
 
 spec :: Spec
 spec = do
-    let keywords = [("alias", aliasKeyword), ("import", importKeyword), ("struct", structKeyword), ("sub", subKeyword)]
+    let keywords = [("alias", aliasKeyword), ("foreign", foreignKeyword), ("import", importKeyword), ("struct", structKeyword), ("sub", subKeyword)]
 
     describe "Language.Mill.Lex.identifier" $ do
         it "lexes one-character identifiers" $ do
