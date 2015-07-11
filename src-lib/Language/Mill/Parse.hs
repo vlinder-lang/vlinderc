@@ -71,7 +71,7 @@ stmt :: Parser Stmt
 stmt = (ExprStmt <$> expr) <|> (DeclStmt <$> decl)
 
 decl :: Parser Decl
-decl = aliasDecl <|> importDecl <|> try structDecl <|> subDecl
+decl = aliasDecl <|> importDecl <|> try structDecl <|> subDecl <|> foreignSubDecl
 
 aliasDecl :: Parser Decl
 aliasDecl = do
@@ -105,3 +105,15 @@ subDecl = do
     retType <- type_
     body <- blockExpr
     return $ SubDecl id params retType body
+
+foreignSubDecl :: Parser Decl
+foreignSubDecl = do
+    foreignKeyword
+    library <- ForeignLibrary <$> stringLiteral
+    subKeyword
+    cconv <- CallingConvention <$> name
+    name <- identifier
+    params <- parameterList
+    colon
+    retType <- type_
+    return $ ForeignSubDecl library cconv name params retType
