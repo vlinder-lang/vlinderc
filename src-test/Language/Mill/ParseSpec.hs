@@ -21,6 +21,10 @@ cType = NamedType typeID (UnqualifiedName "C")
 dType = NamedType typeID (UnqualifiedName "D")
 emptyBlock = BlockExpr exprID []
 makeType name = NamedType typeID (UnqualifiedName name)
+stringFoo = StringLiteralExpr "foo"
+stringBar = StringLiteralExpr "bar"
+abcQualifiedName = QualifiedName (ModuleName ["a", "b"]) "c"
+abcType = NamedType abcQualifiedName
 helloWorldSource = "import mill.log\n" ++
                    "\n" ++
                    "sub main(console: log.Logger): () {\n" ++
@@ -47,7 +51,7 @@ spec = do
         rights [runParser (name <* eof) 0 "" "a"] `shouldBe` [UnqualifiedName "a"]
 
       it "parses qualified names" $ do
-        rights [runParser (name <* eof) 0 "" "a.b.c"] `shouldBe` [QualifiedName (ModuleName ["a", "b"]) "c"]
+        rights [runParser (name <* eof) 0 "" "a.b.c"] `shouldBe` [abcQualifiedName]
 
     describe "Language.Mill.Parse.parameter" $ do
       it "parses a parameter with a type" $ do
@@ -96,6 +100,16 @@ spec = do
         rights [runParser (structDecl <* eof) 0 "" "struct T { }"] `shouldBe` [StructDecl declID "T" []]
         rights [runParser (structDecl <* eof) 0 "" "struct T { x: A }"] `shouldBe` [StructDecl declID "T" [Field "x" aType]]
         rights [runParser (structDecl <* eof) 0 "" "struct T { x: A y: B }"] `shouldBe` [StructDecl declID "T" [Field "x" aType, Field "y" bType]]
+
+    describe "Language.Mill.Parse.structLitExpr" $ do
+      it "parses an empty struct literal" $ do
+        rights [runParser (structLitExpr <* eof) 0 "" "A{}"] `shouldBe` [StructLiteralExpr aType []]
+
+      it "parses a struct literal with one value" $ do
+        rights [runParser (structLitExpr <* eof) 0 "" "A{foo: \"foo\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo]]
+
+      it "parses a struct literal with values" $ do
+        rights [runParser (structLitExpr <* eof) 0 "" "A{foo: \"foo\", bar :\"bar\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo, FieldValue "bar" stringBar]]
 
     describe "Language.Mill.Parse.subDecl" $ do
       it "parses an empty sub declaration" $ do

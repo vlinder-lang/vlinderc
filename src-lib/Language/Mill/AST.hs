@@ -23,6 +23,17 @@ data Parameter = Parameter String Type
 data Module = Module [Decl]
               deriving (Eq, Show)
 
+data Field = Field String Type
+             deriving (Eq, Show)
+
+data FieldValue = FieldValue String Expr
+                  deriving (Eq, Show)
+
+newtype ForeignLibrary = ForeignLibrary String
+                         deriving (Eq, Show)
+newtype CallingConvention = CallingConvention Name
+                            deriving (Eq, Show)
+
 data Decl
     = ImportDecl DeclID ModuleName
     | SubDecl DeclID String ParameterList Type Expr
@@ -31,19 +42,12 @@ data Decl
     | StructDecl DeclID String [Field]
     deriving (Eq, Show)
 
-data Field = Field String Type
-             deriving (Eq, Show)
-
-newtype ForeignLibrary = ForeignLibrary String
-                         deriving (Eq, Show)
-newtype CallingConvention = CallingConvention Name
-                            deriving (Eq, Show)
-
 data Expr
     = BlockExpr ExprID [Stmt]
     | CallExpr ExprID Expr [Expr]
     | NameExpr ExprID Name
     | StringLiteralExpr ExprID String
+    | StructLiteralExpr Type [FieldValue]
     deriving (Eq, Show)
 
 data Stmt

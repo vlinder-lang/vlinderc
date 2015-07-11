@@ -68,6 +68,12 @@ stringLiteralExpr = StringLiteralExpr <$> newID <*> stringLiteral
 blockExpr :: Parser Expr
 blockExpr = BlockExpr <$> newID <*> (openingBrace *> many stmt <* closingBrace)
 
+structLitExpr :: Parser Expr
+structLitExpr = StructLiteralExpr <$> type_ <*> (openingBrace *> fieldValue `sepBy` comma <* closingBrace)
+    where
+        fieldValue :: Parser FieldValue
+        fieldValue = FieldValue <$> identifier <*> (colon *> expr)
+
 stmt :: Parser Stmt
 stmt = (ExprStmt <$> expr) <|> (DeclStmt <$> decl)
 
