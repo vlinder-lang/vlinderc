@@ -4,6 +4,7 @@ import Control.Applicative ((<*))
 import Data.Either (rights)
 import Language.Mill.AST
 import Language.Mill.AST.ID (TypeID(..), DeclID(..), ExprID(..))
+import Language.Mill.Module (ModuleName(..))
 import Language.Mill.Parse
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, runParser)
@@ -29,10 +30,10 @@ helloWorldSource = "import mill.log\n" ++
 helloWorldAST = Module [ ImportDecl declID (ModuleName ["mill", "log"])
                        , SubDecl declID
                                  "main"
-                                 [Parameter "console" (NamedType typeID (QualifiedName (ModuleName ["log"]) "Logger"))]
+                                 [Parameter "console" (NamedType typeID (QualifiedName "log" "Logger"))]
                                  (TupleType typeID [])
                                  (BlockExpr exprID [ExprStmt $ CallExpr exprID
-                                                                        (NameExpr exprID (QualifiedName (ModuleName ["log"]) "info"))
+                                                                        (NameExpr exprID (QualifiedName "log" "info"))
                                                                         [NameExpr exprID (UnqualifiedName "console"), StringLiteralExpr exprID "Hello, world!"]])
                        ]
 
@@ -47,7 +48,7 @@ spec = do
         rights [runParser (name <* eof) 0 "" "a"] `shouldBe` [UnqualifiedName "a"]
 
       it "parses qualified names" $ do
-        rights [runParser (name <* eof) 0 "" "a.b.c"] `shouldBe` [QualifiedName (ModuleName ["a", "b"]) "c"]
+        rights [runParser (name <* eof) 0 "" "a.b"] `shouldBe` [QualifiedName "a" "b"]
 
     describe "Language.Mill.Parse.parameter" $ do
       it "parses a parameter with a type" $ do
@@ -69,8 +70,7 @@ spec = do
     describe "Language.Mill.Parse.type_" $ do
       it "parses named types" $ do
         rights [runParser (type_ <* eof) 0 "" "A"] `shouldBe` [aType]
-        rights [runParser (type_ <* eof) 0 "" "m.A"] `shouldBe` [NamedType typeID (QualifiedName (ModuleName ["m"]) "A")]
-        rights [runParser (type_ <* eof) 0 "" "m.n.A"] `shouldBe` [NamedType typeID (QualifiedName (ModuleName ["m", "n"]) "A")]
+        rights [runParser (type_ <* eof) 0 "" "m.A"] `shouldBe` [NamedType typeID (QualifiedName "m" "A")]
 
       it "parses sub types" $ do
         rights [runParser (type_ <* eof) 0 "" "(A) => B"] `shouldBe` [SubType typeID [aType] bType]
@@ -106,4 +106,4 @@ spec = do
 
     describe "Language.Mill.Parse.foreignSubDecl" $ do
       it "parses foreign sub declarations" $ do
-        rights [runParser (foreignSubDecl <* eof) 0 "" "foreign \"./console.js\" sub ecmascript.returnCall info(message: String): ()"] `shouldBe` [ForeignSubDecl declID (ForeignLibrary "./console.js") (CallingConvention (QualifiedName (ModuleName ["ecmascript"]) "returnCall")) "info" [Parameter "message" (NamedType typeID (UnqualifiedName "String"))] (TupleType typeID [])]
+        rights [runParser (foreignSubDecl <* eof) 0 "" "foreign \"./console.js\" sub ecmascript.returnCall info(message: String): ()"] `shouldBe` [ForeignSubDecl declID (ForeignLibrary "./console.js") (CallingConvention (QualifiedName "ecmascript" "returnCall")) "info" [Parameter "message" (NamedType typeID (UnqualifiedName "String"))] (TupleType typeID [])]

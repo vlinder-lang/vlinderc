@@ -1,13 +1,11 @@
 module Language.Mill.AST where
 
 import Language.Mill.AST.ID (TypeID, DeclID, ExprID)
-
-newtype ModuleName = ModuleName [String]
-                     deriving (Eq, Show)
+import Language.Mill.Module (ModuleName)
 
 data Name
     = UnqualifiedName String
-    | QualifiedName ModuleName String
+    | QualifiedName String String
     deriving (Eq, Show)
 
 data Type
