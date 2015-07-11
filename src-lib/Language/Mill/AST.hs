@@ -32,6 +32,9 @@ data Decl
 data Field = Field String Type
              deriving (Eq, Show)
 
+data FieldValue = FieldValue String Expr
+                  deriving (Eq, Show)
+
 newtype ForeignLibrary = ForeignLibrary String
                          deriving (Eq, Show)
 newtype CallingConvention = CallingConvention Name
@@ -42,6 +45,7 @@ data Expr
     | CallExpr ID Expr [Expr]
     | NameExpr ID Name
     | StringLiteralExpr ID String
+    | StructLiteralExpr Type [FieldValue]
     deriving (Eq, Show)
 
 data Stmt

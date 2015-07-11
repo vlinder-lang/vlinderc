@@ -20,6 +20,8 @@ cType = NamedType nodeID (UnqualifiedName "C")
 dType = NamedType nodeID (UnqualifiedName "D")
 emptyBlock = BlockExpr nodeID []
 makeType name = NamedType nodeID (UnqualifiedName name)
+stringFoo = StringLiteralExpr nodeID "foo"
+stringBar = StringLiteralExpr nodeID "bar"
 helloWorldSource = "import mill.log\n" ++
                    "\n" ++
                    "sub main(console: log.Logger): () {\n" ++
@@ -94,6 +96,16 @@ spec = do
         rights [runParser (structDecl <* eof) 0 "" "struct T { }"] `shouldBe` [StructDecl nodeID "T" []]
         rights [runParser (structDecl <* eof) 0 "" "struct T { x: A }"] `shouldBe` [StructDecl nodeID "T" [Field "x" aType]]
         rights [runParser (structDecl <* eof) 0 "" "struct T { x: A y: B }"] `shouldBe` [StructDecl nodeID "T" [Field "x" aType, Field "y" bType]]
+
+    describe "Language.Mill.Parse.structLitExpr" $ do
+      it "parses an empty struct literal" $ do
+        rights [runParser (structLitExpr <* eof) 0 "" "A{}"] `shouldBe` [StructLiteralExpr aType []]
+
+      it "parses a struct literal with one value" $ do
+        rights [runParser (structLitExpr <* eof) 0 "" "A{foo: \"foo\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo]]
+
+      it "parses a struct literal with values" $ do
+        rights [runParser (structLitExpr <* eof) 0 "" "A{foo: \"foo\", bar :\"bar\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo, FieldValue "bar" stringBar]]
 
     describe "Language.Mill.Parse.subDecl" $ do
       it "parses an empty sub declaration" $ do
