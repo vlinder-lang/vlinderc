@@ -94,23 +94,31 @@ resolveNamesInExpr ms st expr = case expr of
     CallExpr _ callee args ->
         mconcat <$> mapM (resolveNamesInExpr ms st) (callee : args)
 
-    NameExpr id (UnqualifiedName name) ->
-        return $ Map.singleton id (st Map.! name)
-
-    NameExpr id (QualifiedName moduleName name) ->
-        error "not implemented"
+    NameExpr id name ->
+        lookupName ms st id name
 
     StringLiteralExpr _ _ ->
         return Map.empty
 
 resolveNamesInType :: Map ModuleName Module -> SymbolTable -> Type -> NameResolving (Map ID Symbol)
 resolveNamesInType ms st type_ = case type_ of
-    NamedType id (UnqualifiedName name) ->
+    NamedType id name ->
+        lookupName ms st id name
+
+    SubType _ paramTypes returnType ->
+        mconcat <$> mapM (resolveNamesInType ms st) (returnType : paramTypes)
+
+    TupleType _ elementTypes ->
+        mconcat <$> mapM (resolveNamesInType ms st) elementTypes
+
+lookupName :: Map ModuleName Module -> SymbolTable -> ID -> Name -> NameResolving (Map ID Symbol)
+lookupName ms st id name = case name of
+    UnqualifiedName name ->
         case name `Map.lookup` st of
             Just symbol -> return $ Map.singleton id symbol
             Nothing -> failNotInScope name
 
-    NamedType id (QualifiedName unqualifiedModuleName name) ->
+    QualifiedName unqualifiedModuleName name ->
         case unqualifiedModuleName `Map.lookup` st of
             Just (ModuleSymbol moduleName) ->
                 case idForDeclInModule (ms Map.! moduleName) name of
@@ -118,12 +126,6 @@ resolveNamesInType ms st type_ = case type_ of
                     Nothing -> failNotExported moduleName name
             Just _ -> failNotAModule unqualifiedModuleName
             Nothing -> failNotInScope unqualifiedModuleName
-
-    SubType _ paramTypes returnType ->
-        mconcat <$> mapM (resolveNamesInType ms st) (returnType : paramTypes)
-
-    TupleType _ elementTypes ->
-        mconcat <$> mapM (resolveNamesInType ms st) elementTypes
 
 idForDeclInModule :: Module -> String -> Maybe ID
 idForDeclInModule (Module decls) name =
