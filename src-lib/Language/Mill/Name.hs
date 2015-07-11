@@ -2,7 +2,9 @@ module Language.Mill.Name where
 
 import Control.Applicative ((<$>))
 import Control.Monad (forM_)
+import Control.Monad.Morph (lift)
 import Control.Monad.ST (runST)
+import Control.Monad.Trans.Either (EitherT, hoistEither, runEitherT)
 import Data.Map (Map)
 import Data.Set (Set)
 import Data.STRef (newSTRef, readSTRef, modifySTRef')
@@ -12,6 +14,8 @@ import Data.Monoid (mconcat)
 import Language.Mill.AST
 import Language.Mill.AST.ID (ID)
 import Language.Mill.Module (ModuleName(..))
+
+type NameResolving a = Either String a
 
 data Symbol
     = StringTypeSymbol
@@ -26,88 +30,95 @@ defaultSymbolTable = Map.fromList $
     [ ("__String", StringTypeSymbol)
     ]
 
-resolveNamesInModule :: Map ModuleName Module -> ModuleName -> Map ID Symbol
-resolveNamesInModule ms m = runST $ do
+resolveNamesInModule :: Map ModuleName Module -> ModuleName -> NameResolving (Map ID Symbol)
+resolveNamesInModule ms m = runST $ runEitherT $ do
     let (Module decls) = ms Map.! m
-    st <- newSTRef defaultSymbolTable
-    resolvedNames <- newSTRef Map.empty
+    st <- lift $ newSTRef defaultSymbolTable
+    resolvedNames <- lift $ newSTRef Map.empty
     forM_ decls $ \decl -> do
-        (declST, declResolvedNames) <-
-            (\st' -> resolveNamesInDecl ms st' decl) <$> readSTRef st
-        modifySTRef' st (Map.union declST)
-        modifySTRef' resolvedNames (Map.union declResolvedNames)
-    readSTRef resolvedNames
+        (declST, declResolvedNames) <- do
+            st' <- lift $ readSTRef st
+            hoistEither $ resolveNamesInDecl ms st' decl
+        lift $ modifySTRef' st (Map.union declST)
+        lift $ modifySTRef' resolvedNames (Map.union declResolvedNames)
+    lift $ readSTRef resolvedNames
 
-resolveNamesInDecl :: Map ModuleName Module -> SymbolTable -> Decl -> (SymbolTable, Map ID Symbol)
+resolveNamesInDecl :: Map ModuleName Module -> SymbolTable -> Decl -> NameResolving (SymbolTable, Map ID Symbol)
 resolveNamesInDecl ms st decl = case decl of
-    ImportDecl _ m@(ModuleName mp) ->
-        let resolved = resolveNamesInModule ms m
-         in (Map.singleton (last mp) (ModuleSymbol m), resolved)
+    ImportDecl _ m@(ModuleName mp) -> do
+        resolved <- resolveNamesInModule ms m
+        return (Map.singleton (last mp) (ModuleSymbol m), resolved)
 
-    SubDecl id name params returnType body ->
-        let resolvedNames = runST $ do
-                bodyST <- newSTRef (Map.insert name (DeclSymbol id) st)
-                resolved <- newSTRef Map.empty
-                forM_ params $ \(Parameter paramID paramName paramType) -> do
-                    modifySTRef' bodyST (Map.insert paramName (DeclSymbol paramID))
-                    modifySTRef' resolved (Map.union (resolveNamesInType ms st paramType))
-                bodyST' <- readSTRef bodyST
-                modifySTRef' resolved (Map.union (resolveNamesInExpr ms bodyST' body))
-                readSTRef resolved
-         in (Map.singleton name (DeclSymbol id), resolvedNames)
+    SubDecl id name params returnType body -> do
+        resolvedNames <- runST $ runEitherT $ do
+            bodyST <- lift $ newSTRef (Map.insert name (DeclSymbol id) st)
+            resolved <- lift $ newSTRef Map.empty
 
-    AliasDecl id name aliasedType ->
-        (Map.singleton name (DeclSymbol id), resolveNamesInType ms st aliasedType)
+            forM_ params $ \(Parameter paramID paramName paramType) -> do
+                lift $ modifySTRef' bodyST (Map.insert paramName (DeclSymbol paramID))
+                resolvedInType <- hoistEither $ resolveNamesInType ms st paramType
+                lift $ modifySTRef' resolved (Map.union resolvedInType)
 
-    StructDecl id name fields ->
-        let resolvedNames =
-                mconcat $ map (\(Field _ t) -> resolveNamesInType ms st t) fields
-         in (Map.singleton name (DeclSymbol id), resolvedNames)
+            bodyST' <- lift $ readSTRef bodyST
+            resolvedInBody <- hoistEither $ resolveNamesInExpr ms bodyST' body
+            lift $ modifySTRef' resolved (Map.union resolvedInBody)
 
-resolveNamesInExpr :: Map ModuleName Module -> SymbolTable -> Expr -> Map ID Symbol
+            lift $ readSTRef resolved
+        return (Map.singleton name (DeclSymbol id), resolvedNames)
+
+    AliasDecl id name aliasedType -> do
+        resolved <- resolveNamesInType ms st aliasedType
+        return (Map.singleton name (DeclSymbol id), resolved)
+
+    StructDecl id name fields -> do
+        resolved <- mconcat <$> mapM (\(Field _ t) -> resolveNamesInType ms st t) fields
+        return (Map.singleton name (DeclSymbol id), resolved)
+
+resolveNamesInExpr :: Map ModuleName Module -> SymbolTable -> Expr -> NameResolving (Map ID Symbol)
 resolveNamesInExpr ms st expr = case expr of
-    BlockExpr _ stmts -> runST $ do
-        blockST <- newSTRef st
-        resolved <- newSTRef Map.empty
+    BlockExpr _ stmts -> runST $ runEitherT $ do
+        blockST <- lift $ newSTRef st
+        resolved <- lift $ newSTRef Map.empty
         forM_ stmts $ \stmt -> case stmt of
             ExprStmt expr -> do
-                st' <- readSTRef blockST
-                modifySTRef' resolved (Map.union (resolveNamesInExpr ms st' expr))
+                st' <- lift $ readSTRef blockST
+                resolvedInExpr <- hoistEither $ resolveNamesInExpr ms st' expr
+                lift $ modifySTRef' resolved (Map.union resolvedInExpr)
             DeclStmt decl -> do
-                (declST, declResolvedNames) <-
-                    (\st' -> resolveNamesInDecl ms st' decl) <$> readSTRef blockST
-                modifySTRef' blockST (Map.union declST)
-                modifySTRef' resolved (Map.union declResolvedNames)
-        readSTRef resolved
+                st' <- lift $ readSTRef blockST
+                (declST, declResolvedNames) <- hoistEither $ resolveNamesInDecl ms st' decl
+                lift $ modifySTRef' blockST (Map.union declST)
+                lift $ modifySTRef' resolved (Map.union declResolvedNames)
+        lift $ readSTRef resolved
 
     CallExpr _ callee args ->
-        mconcat $ map (resolveNamesInExpr ms st) (callee : args)
+        mconcat <$> mapM (resolveNamesInExpr ms st) (callee : args)
 
     NameExpr id (UnqualifiedName name) ->
-        Map.singleton id (st Map.! name)
+        return $ Map.singleton id (st Map.! name)
 
     NameExpr id (QualifiedName moduleName name) ->
         error "not implemented"
 
     StringLiteralExpr _ _ ->
-        Map.empty
+        return Map.empty
 
-resolveNamesInType :: Map ModuleName Module -> SymbolTable -> Type -> Map ID Symbol
+resolveNamesInType :: Map ModuleName Module -> SymbolTable -> Type -> NameResolving (Map ID Symbol)
 resolveNamesInType ms st type_ = case type_ of
     NamedType id (UnqualifiedName name) ->
-        Map.singleton id (st Map.! name)
+        return $ Map.singleton id (st Map.! name)
 
     NamedType id (QualifiedName unqualifiedModuleName name) ->
         let (ModuleSymbol moduleName) = st Map.! unqualifiedModuleName
             module_ = ms Map.! moduleName
             Just declID = idForDeclInModule module_ name
-         in Map.singleton id (DeclSymbol declID)
+         in return $ Map.singleton id (DeclSymbol declID)
 
     SubType _ paramTypes returnType ->
-        mconcat $ map (resolveNamesInType ms st) (returnType : paramTypes)
+        mconcat <$> mapM (resolveNamesInType ms st) (returnType : paramTypes)
 
     TupleType _ elementTypes ->
-        mconcat $ map (resolveNamesInType ms st) elementTypes
+        mconcat <$> mapM (resolveNamesInType ms st) elementTypes
 
 idForDeclInModule :: Module -> String -> Maybe ID
 idForDeclInModule (Module decls) name =

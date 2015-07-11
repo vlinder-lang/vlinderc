@@ -30,4 +30,4 @@ spec = do
                                         , (ID 13, DeclSymbol (ID 15))
                                         , (ID 16, StringTypeSymbol)
                                         ]
-            (resolveNamesInModule modules (ModuleName ["mill", "log"])) `shouldBe` expected
+            (resolveNamesInModule modules (ModuleName ["mill", "log"])) `shouldBe` Right expected
