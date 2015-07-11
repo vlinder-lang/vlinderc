@@ -90,4 +90,15 @@ resolveNamesInExpr st expr = case expr of
         Map.empty
 
 resolveNamesInType :: SymbolTable -> Type -> Map ID Symbol
-resolveNamesInType _ _ = Map.empty
+resolveNamesInType st type_ = case type_ of
+    NamedType id (UnqualifiedName name) ->
+        Map.singleton id (st Map.! name)
+
+    NamedType id (QualifiedName moduleName name) ->
+        error "not implemented"
+
+    SubType _ paramTypes returnType ->
+        mconcat $ map (resolveNamesInType st) (returnType : paramTypes)
+
+    TupleType _ elementTypes ->
+        mconcat $ map (resolveNamesInType st) elementTypes

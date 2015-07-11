@@ -19,5 +19,6 @@ spec = do
             let modules = Map.fromList [ (ModuleName ["mill", "log"], millLog)
                                        ]
             let expected = Map.fromList [ (ID 4, DeclSymbol (ID 5))
+                                        , (ID 6, DeclSymbol (ID 7))
                                         ]
             (resolveNamesInModules modules) `shouldBe` expected
