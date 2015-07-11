@@ -2,20 +2,22 @@ module Language.Mill.Parse where
 
 import Control.Applicative ((<$>), (<|>), (<*), (<*>), (*>))
 import Control.Monad (foldM)
-import Text.Parsec (eof, sepBy, sepBy1, try, sepEndBy, many)
-import Language.Mill.Lex
 import Language.Mill.AST
-import Language.Mill.AST.ID (newID, TypeID(..), DeclID(..), ExprID(..))
+import Language.Mill.AST.ID (newID)
+import Language.Mill.Lex
+import Language.Mill.Module (ModuleName(..))
+import Text.Parsec (eof, sepBy, sepBy1, try, sepEndBy, many, optionMaybe)
 
 module_ :: Parser Module
 module_ = Module <$> many decl <* eof
 
 name :: Parser Name
 name = do
-    parts <- identifier `sepBy1` dot
-    return $ case parts of
-        [id] -> UnqualifiedName id
-        xs -> QualifiedName (ModuleName $ init xs) (last xs)
+    part1 <- identifier
+    part2 <- optionMaybe (dot *> identifier)
+    return $ case part2 of
+        Nothing -> UnqualifiedName part1
+        Just id -> QualifiedName part1 id
 
 type_ :: Parser Type
 type_ = namedType <|> try subType <|> tupleType
@@ -36,10 +38,11 @@ tupleType = TupleType <$> newID <*> (openingParenthesis *> type_ `sepEndBy` comm
 
 parameter :: Parser Parameter
 parameter = do
+    id <- newID
     name <- identifier
     colon
     paramType <- type_
-    return $ Parameter name paramType
+    return $ Parameter id name paramType
 
 parameterList :: Parser ParameterList
 parameterList = openingParenthesis *> parameter `sepEndBy` comma <* closingParenthesis

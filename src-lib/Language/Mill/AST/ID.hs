@@ -1,52 +1,24 @@
 module Language.Mill.AST.ID
-( ID
-, TypeID(..)
-, DeclID(..)
-, ExprID(..)
+( ID(..)
 , newID
 ) where
 
 import Control.Applicative ((<$>))
 import Text.Parsec (ParsecT, getState, modifyState)
 
-class ID a where
-    idFromInt :: Int -> a
-    idToInt :: a -> Int
+newtype ID = ID Int
+             deriving (Ord, Show)
 
-newtype TypeID = TypeID Int
-                 deriving (Show)
+idFromInt :: Int -> ID
+idFromInt = ID
 
-instance ID TypeID where
-    idFromInt = TypeID
-    idToInt (TypeID id) = id
+idToInt :: ID -> Int
+idToInt (ID id) = id
 
-newtype DeclID = DeclID Int
-                 deriving (Show)
+instance Eq ID where
+    a == b = idToInt a == (-1) || idToInt b == (-1) || idToInt a == idToInt b
 
-instance ID DeclID where
-    idFromInt = DeclID
-    idToInt (DeclID id) = id
-
-newtype ExprID = ExprID Int
-                 deriving (Show)
-
-instance ID ExprID where
-    idFromInt = ExprID
-    idToInt (ExprID id) = id
-
-instance Eq TypeID where
-    (==) = idEq
-
-instance Eq DeclID where
-    (==) = idEq
-
-instance Eq ExprID where
-    (==) = idEq
-
-idEq :: ID a => a -> a -> Bool
-a `idEq` b = idToInt a == (-1) || idToInt b == (-1) || idToInt a == idToInt b
-
-newID :: (Monad m, ID a) => ParsecT s Int m a
+newID :: Monad m => ParsecT s Int m ID
 newID = do
     id <- idFromInt <$> getState
     modifyState succ

@@ -6,9 +6,9 @@ cabal-version:          >=1.10
 
 library
     hs-source-dirs:     src-lib
-    exposed-modules:    Language.Mill.AST, Language.Mill.AST.ID, Language.Mill.Lex, Language.Mill.Parse
+    exposed-modules:    Language.Mill.AST, Language.Mill.AST.ID, Language.Mill.Lex, Language.Mill.Module, Language.Mill.Name, Language.Mill.Parse
     default-language:   Haskell2010
-    build-depends:      base, parsec
+    build-depends:      base, containers, either, mmorph, parsec
 
 executable millc
     hs-source-dirs:     src-exec
@@ -21,4 +21,4 @@ test-suite millc-test
     hs-source-dirs:     src-test
     main-is:            Main.hs
     default-language:   Haskell2010
-    build-depends:      base, hspec, millc, parsec
+    build-depends:      base, containers, hspec, millc, parsec
