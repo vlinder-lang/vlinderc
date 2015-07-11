@@ -60,7 +60,7 @@ callExpr = do
         argumentList = openingParenthesis *> expr `sepEndBy` comma <* closingParenthesis
 
 primaryExpr :: Parser Expr
-primaryExpr = nameExpr <|> stringLiteralExpr <|> blockExpr
+primaryExpr = try structLiteralExpr <|> nameExpr <|> stringLiteralExpr <|> blockExpr
 
 nameExpr :: Parser Expr
 nameExpr = NameExpr <$> newID <*> name
@@ -71,8 +71,8 @@ stringLiteralExpr = StringLiteralExpr <$> newID <*> stringLiteral
 blockExpr :: Parser Expr
 blockExpr = BlockExpr <$> newID <*> (openingBrace *> many stmt <* closingBrace)
 
-structLitExpr :: Parser Expr
-structLitExpr = StructLiteralExpr <$> type_ <*> (openingBrace *> fieldValue `sepBy` comma <* closingBrace)
+structLiteralExpr :: Parser Expr
+structLiteralExpr = StructLiteralExpr <$> type_ <*> (openingBrace *> fieldValue `sepBy` comma <* closingBrace)
     where
         fieldValue :: Parser FieldValue
         fieldValue = FieldValue <$> identifier <*> (colon *> expr)

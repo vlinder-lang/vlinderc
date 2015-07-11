@@ -97,15 +97,15 @@ spec = do
         rights [runParser (structDecl <* eof) 0 "" "struct T { x: A }"] `shouldBe` [StructDecl nodeID "T" [Field "x" aType]]
         rights [runParser (structDecl <* eof) 0 "" "struct T { x: A y: B }"] `shouldBe` [StructDecl nodeID "T" [Field "x" aType, Field "y" bType]]
 
-    describe "Language.Mill.Parse.structLitExpr" $ do
+    describe "Language.Mill.Parse.structLiteralExpr" $ do
       it "parses an empty struct literal" $ do
-        rights [runParser (structLitExpr <* eof) 0 "" "A{}"] `shouldBe` [StructLiteralExpr aType []]
+        rights [runParser (structLiteralExpr <* eof) 0 "" "A{}"] `shouldBe` [StructLiteralExpr aType []]
 
       it "parses a struct literal with one value" $ do
-        rights [runParser (structLitExpr <* eof) 0 "" "A{foo: \"foo\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo]]
+        rights [runParser (structLiteralExpr <* eof) 0 "" "A{foo: \"foo\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo]]
 
       it "parses a struct literal with values" $ do
-        rights [runParser (structLitExpr <* eof) 0 "" "A{foo: \"foo\", bar :\"bar\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo, FieldValue "bar" stringBar]]
+        rights [runParser (structLiteralExpr <* eof) 0 "" "A{foo: \"foo\", bar :\"bar\"}"] `shouldBe` [StructLiteralExpr aType [FieldValue "foo" stringFoo, FieldValue "bar" stringBar]]
 
     describe "Language.Mill.Parse.subDecl" $ do
       it "parses an empty sub declaration" $ do
