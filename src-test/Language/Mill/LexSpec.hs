@@ -6,7 +6,7 @@ import Data.Char (toUpper)
 import Data.Either (rights)
 import Language.Mill.Lex
 import Test.Hspec (describe, it, shouldBe, Spec)
-import Text.Parsec (eof, parse)
+import Text.Parsec (eof, runParser)
 
 -- TODO move this
 ucFirst :: String -> String
@@ -20,28 +20,28 @@ spec = do
     describe "Language.Mill.Lex.identifier" $ do
         it "lexes one-character identifiers" $ do
             forM_ ["_", "a", "A"] $ \id -> do
-                rights [parse (identifier <* eof) "" id] `shouldBe` [id]
+                rights [runParser (identifier <* eof) 0 "" id] `shouldBe` [id]
 
         it "lexes multicharacter identifiers" $ do
             forM_ ["__", "a_b", "Ab", "aB", "abC_", "abc9023"] $ \id -> do
-                rights [parse (identifier <* eof) "" id] `shouldBe` [id]
+                rights [runParser (identifier <* eof) 0 "" id] `shouldBe` [id]
 
         it "does not lex keywords" $ do
             forM_ (map fst keywords) $ \id -> do
-                rights [parse (identifier <* eof) "" id] `shouldBe` []
+                rights [runParser (identifier <* eof) 0 "" id] `shouldBe` []
 
     forM_ keywords $ \(keyword, keywordParser) -> do
         describe ("Language.Mill.Lex.keyword" ++ ucFirst keyword) $ do
             it ("lexes '" ++ keyword ++ "'") $ do
-                rights [parse (keywordParser <* eof) "" keyword] `shouldBe` [()]
+                rights [runParser (keywordParser <* eof) 0 "" keyword] `shouldBe` [()]
 
             it ("does not lex '" ++ keyword ++ "x'") $ do
-                rights [parse (keywordParser <* eof) "" (keyword ++ "x")] `shouldBe` []
+                rights [runParser (keywordParser <* eof) 0 "" (keyword ++ "x")] `shouldBe` []
 
             it "does not lex something weird" $ do
-                rights [parse (keywordParser <* eof) "" "bullshit"] `shouldBe` []
+                rights [runParser (keywordParser <* eof) 0 "" "bullshit"] `shouldBe` []
 
     describe "Language.Mill.Lex.stringLiteral" $ do
         it "lexes string literals" $ do
             forM_ ["", "a", "A B C"] $ \str -> do
-                rights [parse (stringLiteral <* eof) "" ("\"" ++ str ++ "\"")] `shouldBe` [str]
+                rights [runParser (stringLiteral <* eof) 0 "" ("\"" ++ str ++ "\"")] `shouldBe` [str]
