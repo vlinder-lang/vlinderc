@@ -106,7 +106,9 @@ resolveNamesInExpr ms st expr = case expr of
 resolveNamesInType :: Map ModuleName Module -> SymbolTable -> Type -> NameResolving (Map ID Symbol)
 resolveNamesInType ms st type_ = case type_ of
     NamedType id (UnqualifiedName name) ->
-        return $ Map.singleton id (st Map.! name)
+        case name `Map.lookup` st of
+            Just symbol -> return $ Map.singleton id symbol
+            Nothing -> failNotInScope name
 
     NamedType id (QualifiedName unqualifiedModuleName name) ->
         case unqualifiedModuleName `Map.lookup` st of
