@@ -2,15 +2,10 @@ module Language.Mill.Parse where
 
 import Control.Applicative ((<$>), (<|>), (<*), (<*>), (*>))
 import Control.Monad (foldM)
-import Text.Parsec (eof, sepBy, sepBy1, try, sepEndBy, many, getState, modifyState)
+import Text.Parsec (eof, sepBy, sepBy1, try, sepEndBy, many)
 import Language.Mill.Lex
 import Language.Mill.AST
-
-newID :: ID a => Parser a
-newID = do
-    id <- idFromInt <$> getState
-    modifyState succ
-    return id
+import Language.Mill.AST.ID (newID, TypeID(..), DeclID(..), ExprID(..))
 
 module_ :: Parser Module
 module_ = Module <$> many decl <* eof
