@@ -17,8 +17,19 @@ millLog = Module [ ImportDecl (ID 14) (ModuleName ["mill", "text"])
 millText :: Module
 millText = Module [AliasDecl (ID 15) "String" (NamedType (ID 16) (UnqualifiedName "__String"))]
 
-notInScope :: Module
-notInScope = Module [AliasDecl (ID 1) "T" (NamedType (ID 2) (UnqualifiedName "B"))]
+notInScope1 :: Module
+notInScope1 = Module [AliasDecl (ID 1) "T" (NamedType (ID 2) (UnqualifiedName "B"))]
+
+notInScope2 :: Module
+notInScope2 = Module [SubDecl (ID 1) "g" [] (TupleType (ID 2) []) (BlockExpr (ID 3) [ExprStmt $ NameExpr (ID 4) (UnqualifiedName "f")])]
+
+notInScope3 :: Module
+notInScope3 = Module [SubDecl (ID 1) "g" [] (TupleType (ID 2) []) (BlockExpr (ID 3) [ExprStmt $ NameExpr (ID 4) (QualifiedName "m" "f")])]
+
+notInScope4 :: Module
+notInScope4 = Module [ AliasDecl (ID 5) "m" (TupleType (ID 6) [])
+                     , SubDecl (ID 1) "g" [] (TupleType (ID 2) []) (BlockExpr (ID 3) [ExprStmt $ NameExpr (ID 4) (QualifiedName "m" "f")])
+                     ]
 
 spec :: Spec
 spec = do
@@ -36,5 +47,14 @@ spec = do
         resolveNamesInModule modules (ModuleName ["mill", "log"]) `shouldBe` Right expected
 
       it "returns error messages" $ do
-        let modules = Map.fromList [(ModuleName ["notInScope"], notInScope)]
-        resolveNamesInModule modules (ModuleName ["notInScope"]) `shouldBe` failNotInScope "B"
+        let modules = Map.fromList [(ModuleName ["notInScope1"], notInScope1)]
+        resolveNamesInModule modules (ModuleName ["notInScope1"]) `shouldBe` failNotInScope "B"
+
+        let modules = Map.fromList [(ModuleName ["notInScope2"], notInScope2)]
+        resolveNamesInModule modules (ModuleName ["notInScope2"]) `shouldBe` failNotInScope "f"
+
+        let modules = Map.fromList [(ModuleName ["notInScope3"], notInScope3)]
+        resolveNamesInModule modules (ModuleName ["notInScope3"]) `shouldBe` failNotInScope "m"
+
+        let modules = Map.fromList [(ModuleName ["notInScope4"], notInScope4)]
+        resolveNamesInModule modules (ModuleName ["notInScope4"]) `shouldBe` failNotAModule "m"
