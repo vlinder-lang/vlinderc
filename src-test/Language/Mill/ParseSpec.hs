@@ -3,6 +3,7 @@ module Language.Mill.ParseSpec where
 import Control.Applicative ((<*))
 import Data.Either (rights)
 import Language.Mill.AST
+import Language.Mill.AST.ID (TypeID(..), DeclID(..), ExprID(..))
 import Language.Mill.Parse
 import Test.Hspec (describe, it, shouldBe, Spec)
 import Text.Parsec (eof, runParser)

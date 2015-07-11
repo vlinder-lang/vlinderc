@@ -1,44 +1,9 @@
 module Language.Mill.AST where
 
+import Language.Mill.AST.ID (TypeID, DeclID, ExprID)
+
 newtype ModuleName = ModuleName [String]
                      deriving (Eq, Show)
-
-class ID a where
-    idFromInt :: Int -> a
-    idToInt :: a -> Int
-
-newtype TypeID = TypeID Int
-                 deriving (Show)
-
-instance ID TypeID where
-    idFromInt = TypeID
-    idToInt (TypeID id) = id
-
-newtype DeclID = DeclID Int
-                 deriving (Show)
-
-instance ID DeclID where
-    idFromInt = DeclID
-    idToInt (DeclID id) = id
-
-newtype ExprID = ExprID Int
-                 deriving (Show)
-
-instance ID ExprID where
-    idFromInt = ExprID
-    idToInt (ExprID id) = id
-
-instance Eq TypeID where
-    (==) = idEq
-
-instance Eq DeclID where
-    (==) = idEq
-
-instance Eq ExprID where
-    (==) = idEq
-
-idEq :: ID a => a -> a -> Bool
-a `idEq` b = idToInt a == (-1) || idToInt b == (-1) || idToInt a == idToInt b
 
 data Name
     = UnqualifiedName String
