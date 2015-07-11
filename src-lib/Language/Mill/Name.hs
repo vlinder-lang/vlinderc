@@ -43,7 +43,9 @@ resolveNamesInModule ms m = runST $ do
 
 resolveNamesInDecl :: SymbolTable -> Decl -> (SymbolTable, Map ID Symbol)
 resolveNamesInDecl st decl = case decl of
-    ImportDecl _ m -> undefined
+    ImportDecl _ m ->
+        undefined
+
     SubDecl id name params returnType body ->
         let resolvedNames = runST $ do
                 bodyST <- newSTRef (Map.insert name (DeclSymbol id) st)
@@ -55,6 +57,9 @@ resolveNamesInDecl st decl = case decl of
                 modifySTRef' resolved (Map.union (resolveNamesInExpr bodyST' body))
                 readSTRef resolved
          in (Map.singleton name (DeclSymbol id), resolvedNames)
+
+    AliasDecl id name aliasedType ->
+        (Map.singleton name (DeclSymbol id), resolveNamesInType st aliasedType)
 
 resolveNamesInExpr :: SymbolTable -> Expr -> Map ID Symbol
 resolveNamesInExpr st expr = case expr of

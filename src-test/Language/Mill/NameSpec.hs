@@ -8,7 +8,8 @@ import Language.Mill.Module (ModuleName(..))
 import Test.Hspec (describe, it, shouldBe, Spec)
 
 millLog :: Module
-millLog = Module [ SubDecl (ID 1) "info" [] (TupleType (ID 2) []) (BlockExpr (ID 3) [ExprStmt (NameExpr (ID 4) (UnqualifiedName "info"))])
+millLog = Module [ AliasDecl (ID 7) "Logger" (SubType (ID 8) [] (TupleType (ID 9) []))
+                 , SubDecl (ID 1) "info" [(Parameter (ID 5) "logger" (NamedType (ID 6) (UnqualifiedName "Logger")))] (TupleType (ID 2) []) (BlockExpr (ID 3) [ExprStmt (CallExpr (ID 10) (NameExpr (ID 4) (UnqualifiedName "logger")) [])])
                  ]
 
 spec :: Spec
@@ -17,6 +18,6 @@ spec = do
       it "works" $ do
             let modules = Map.fromList [ (ModuleName ["mill", "log"], millLog)
                                        ]
-            let expected = Map.fromList [ (ID 4, DeclSymbol (ID 1))
+            let expected = Map.fromList [ (ID 4, DeclSymbol (ID 5))
                                         ]
             (resolveNamesInModules modules) `shouldBe` expected
