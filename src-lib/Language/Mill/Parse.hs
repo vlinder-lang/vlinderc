@@ -56,7 +56,7 @@ callExpr :: Parser Expr
 callExpr = do
     callee <- primaryExpr
     argumentLists <- many argumentList
-    foldM (\a b -> do { id <- newID; return $ CallExpr id a b }) callee argumentLists
+    foldM (\a b -> (\id -> CallExpr id a b) <$> newID) callee argumentLists
     where
         argumentList :: Parser [Expr]
         argumentList = openingParenthesis *> expr `sepEndBy` comma <* closingParenthesis
