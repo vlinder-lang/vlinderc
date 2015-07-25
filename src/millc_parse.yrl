@@ -54,7 +54,7 @@ params0 -> param params0 : ['$1' | '$2'].
 
 param -> identifier colon type_expr : {token_value('$1'), '$3'}.
 
-module -> decls0 : {module, '$1'}.
+module -> decls0 : {module, '$1', #{}}.
 
 decls0 -> '$empty' : [].
 decls0 -> decl decls0 : ['$1' | '$2'].
@@ -62,11 +62,11 @@ decls0 -> decl decls0 : ['$1' | '$2'].
 decl -> import_decl : '$1'.
 decl -> sub_decl : '$1'.
 
-import_decl -> import module_name : {import_decl, '$2'}.
+import_decl -> import module_name : {import_decl, '$2', #{}}.
 
 sub_decl ->
     sub identifier param_list colon type_expr block_expr
-    : {sub_decl, token_value('$2'), '$3', '$5', '$6'}.
+    : {sub_decl, token_value('$2'), '$3', '$5', '$6', #{}}.
 
 exprs0 -> '$empty' : [].
 exprs0 -> expr exprs0 : ['$1' | '$2'].
@@ -79,22 +79,22 @@ expr -> call_expr : '$1'.
 
 call_expr ->
     call_expr lparen exprs_comma0 rparen
-    : {call_expr, '$1', '$3'}.
+    : {call_expr, '$1', '$3', #{}}.
 call_expr -> primary_expr : '$1'.
 
 primary_expr -> name_expr : '$1'.
 primary_expr -> string_literal_expr : '$1'.
 primary_expr -> block_expr : '$1'.
 
-name_expr -> name : {name_expr, '$1'}.
+name_expr -> name : {name_expr, '$1', #{}}.
 
 string_literal_expr ->
-    string_literal : {string_literal_expr, token_value('$1')}.
+    string_literal : {string_literal_expr, token_value('$1'), #{}}.
 
-block_expr -> lbrace exprs0 rbrace : {block_expr, '$2'}.
+block_expr -> lbrace exprs0 rbrace : {block_expr, '$2', #{}}.
 
-type_expr -> name : {name_type_expr, '$1'}.
-type_expr -> lparen rparen : {tuple_type_expr, []}.
+type_expr -> name : {name_type_expr, '$1', #{}}.
+type_expr -> lparen rparen : {tuple_type_expr, [], #{}}.
 
 Erlang code.
 
