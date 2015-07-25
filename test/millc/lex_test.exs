@@ -2,14 +2,14 @@ defmodule Millc.LexTest do
   use ExUnit.Case
 
   test "Hello, world!" do
-    code = '''
+    code = """
       import mill.log
 
       sub main(console: log.Logger): () {
         log.info(console, "Hello, world!")
       }
-    '''
-    {:ok, tokens, _} = :millc_lex.string(code)
+    """
+    {:ok, tokens} = Millc.Lex.lex(code)
     assert(tokens === [
       {:import, 1},
       {:identifier, 1, 'mill'},

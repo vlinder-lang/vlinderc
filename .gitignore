@@ -4,3 +4,4 @@ erl_crash.dump
 *.ez
 
 /src/millc_lex.erl
+/src/millc_parse.erl

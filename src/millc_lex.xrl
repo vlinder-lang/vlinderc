@@ -2,15 +2,15 @@ Definitions.
 
 WHITESPACE          = [\s\n]+
 
-LBRACE              = {
-RBRACE              = }
-LPAREN              = \(
-RPAREN              = \)
 COLON               = :
 COMMA               = ,
 DOT                 = \.
-FAT_ARROW           = =>
 EQUALS              = =
+FAT_ARROW           = =>
+LBRACE              = {
+LPAREN              = \(
+RBRACE              = }
+RPAREN              = \)
 
 ALIAS               = alias
 FOREIGN             = foreign
@@ -24,15 +24,15 @@ STRING_LITERAL      = ".*?"
 
 Rules.
 
-{LBRACE}            : {token, {lbrace, TokenLine}}.
-{RBRACE}            : {token, {rbrace, TokenLine}}.
-{LPAREN}            : {token, {lparen, TokenLine}}.
-{RPAREN}            : {token, {rparen, TokenLine}}.
 {COLON}             : {token, {colon, TokenLine}}.
 {COMMA}             : {token, {comma, TokenLine}}.
 {DOT}               : {token, {dot, TokenLine}}.
-{FAT_ARROW}         : {token, {fat_arrow, TokenLine}}.
 {EQUALS}            : {token, {equals, TokenLine}}.
+{FAT_ARROW}         : {token, {fat_arrow, TokenLine}}.
+{LBRACE}            : {token, {lbrace, TokenLine}}.
+{LPAREN}            : {token, {lparen, TokenLine}}.
+{RBRACE}            : {token, {rbrace, TokenLine}}.
+{RPAREN}            : {token, {rparen, TokenLine}}.
 
 {ALIAS}             : {token, {alias, TokenLine}}.
 {FOREIGN}           : {token, {foreign, TokenLine}}.
