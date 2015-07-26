@@ -42,7 +42,7 @@ Rules.
 {SUB}               : {token, {sub, TokenLine}}.
 {UNION}             : {token, {union, TokenLine}}.
 
-{IDENTIFIER}        : {token, {identifier, TokenLine, TokenChars}}.
+{IDENTIFIER}        : {token, {identifier, TokenLine, list_to_binary(TokenChars)}}.
 
 {STRING_LITERAL}    : {token, {string_literal, TokenLine, string_literal(TokenChars)}}.
 
@@ -51,4 +51,4 @@ Rules.
 Erlang code.
 
 string_literal(Text) ->
-    string:substr(Text, 2, string:len(Text) - 2).
+    list_to_binary(string:substr(Text, 2, string:len(Text) - 2)).

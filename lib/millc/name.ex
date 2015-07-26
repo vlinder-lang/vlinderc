@@ -1,7 +1,7 @@
 defmodule Millc.Name do
   defmodule Context do
     @derive [Access]
-    defstruct symbol_table: nil, module: nil, modules: nil
+    defstruct symbol_table: nil, module_name: nil, modules: nil
   end
 
   defmodule ModuleSymbol do
@@ -19,13 +19,20 @@ defmodule Millc.Name do
     defstruct name: nil
   end
 
-  def resolve_module(module, modules) do
+  defmodule BuiltinSymbol do
+    @derive [Access]
+    defstruct name: nil
+  end
+
+  def resolve_module(module_name, modules) do
     ctx = %Context{
-      :symbol_table => %{},
-      :module => module,
+      :symbol_table => %{
+        "__String" => %BuiltinSymbol{:name => "__String"},
+      },
+      :module_name => module_name,
       :modules => modules,
     }
-    {_, module} = resolve(ctx, modules[module])
+    {_, module} = resolve(ctx, modules[module_name])
     {:ok, module}
   end
 
@@ -38,14 +45,38 @@ defmodule Millc.Name do
   end
 
   defp resolve(ctx, {:import_decl, module_name, meta}) do
-    # TODO: Check if module is known, and raise if it isn't.
+    if ctx[:modules][module_name] === nil do
+      raise "no such module: '#{Enum.join(module_name, ".")}'"
+    end
     symbol = %ModuleSymbol{:module_name => module_name}
     ctx = put_in(ctx, [:symbol_table, List.last(module_name)], symbol)
     {ctx, {:import_decl, module_name, meta}}
   end
 
+  defp resolve(ctx, {:struct_decl, name, fields, meta}) do
+    symbol = %MemberSymbol{:module_name => ctx[:module_name], :name => name}
+    ctx = put_in(ctx, [:symbol_table, name], symbol)
+    fields = Enum.map(fields, fn({field_name, field_type}) ->
+      {field_name, resolve(ctx, field_type)}
+    end)
+    {ctx, {:struct_decl, name, fields, meta}}
+  end
+
+  defp resolve(ctx, {:union_decl, name, constructors, meta}) do
+    symbol = %MemberSymbol{:module_name => ctx[:module_name], :name => name}
+    ctx = put_in(ctx, [:symbol_table, name], symbol)
+    {ctx, {:union_decl, name, constructors, meta}}
+  end
+
+  defp resolve(ctx, {:alias_decl, name, aliases, meta}) do
+    symbol = %MemberSymbol{:module_name => ctx[:module_name], :name => name}
+    ctx = put_in(ctx, [:symbol_table, name], symbol)
+    aliases = resolve(ctx, aliases)
+    {ctx, {:alias_decl, name, aliases, meta}}
+  end
+
   defp resolve(ctx, {:sub_decl, name, params, return_type, body, meta}) do
-    symbol = %MemberSymbol{:module_name => ctx[:module], :name => name}
+    symbol = %MemberSymbol{:module_name => ctx[:module_name], :name => name}
     ctx = put_in(ctx, [:symbol_table, name], symbol)
 
     params = List.foldl(params, [], fn({param_name, type}, params) ->
@@ -89,6 +120,12 @@ defmodule Millc.Name do
     symbol = lookup_name(ctx, name)
     meta = Dict.put(meta, :symbol, symbol)
     {:name_type_expr, name, meta}
+  end
+
+  defp resolve(ctx, {:sub_type_expr, param_types, return_type, meta}) do
+    param_types = Enum.map(param_types, &resolve(ctx, &1))
+    return_type = resolve(ctx, return_type)
+    {:sub_type_expr, param_types, return_type, meta}
   end
 
   defp resolve(ctx, {:tuple_type_expr, element_types, meta}) do

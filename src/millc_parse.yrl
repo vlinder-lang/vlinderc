@@ -87,7 +87,7 @@ alias_decl ->
 
 struct_decl ->
     struct identifier lbrace fields0 rbrace
-    : {struct_decl, token_value('$2'), $4, #{}}.
+    : {struct_decl, token_value('$2'), '$4', #{}}.
 
 fields0 -> '$empty' : [].
 fields0 -> field fields0 : ['$1' | '$2'].
@@ -101,7 +101,7 @@ union_decl ->
 constructors0 -> '$empty' : [].
 constructors0 -> constructor constructors0 : ['$1' | '$2'].
 
-constructor -> identifier : {'$1', []}.
+constructor -> identifier : {token_value('$1'), []}.
 
 sub_decl ->
     sub identifier param_list colon type_expr block_expr
