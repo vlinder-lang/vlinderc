@@ -4,6 +4,26 @@ defmodule Millc.Name do
     defstruct symbol_table: nil, modules: nil
   end
 
+  defmodule ModuleSymbol do
+    @derive [Access]
+    defstruct module_name: nil
+  end
+
+  defmodule MemberSymbol do
+    @derive [Access]
+    defstruct module_name: nil, name: nil
+  end
+
+  defmodule GlobalSymbol do
+    @derive [Access]
+    defstruct name: nil
+  end
+
+  defmodule LocalSymbol do
+    @derive [Access]
+    defstruct name: nil
+  end
+
   def resolve_module(module, modules) do
     ctx = %Context{
       :symbol_table => %{},
@@ -23,13 +43,13 @@ defmodule Millc.Name do
 
   defp resolve(ctx, {:import_decl, module_name, meta}) do
     # TODO: Check if module is known, and raise if it isn't.
-    symbol = {:module_symbol, module_name}
+    symbol = %ModuleSymbol{:module_name => module_name}
     ctx = put_in(ctx, [:symbol_table, List.last(module_name)], symbol)
     {ctx, {:import_decl, module_name, meta}}
   end
 
   defp resolve(ctx, {:sub_decl, name, params, return_type, body, meta}) do
-    symbol = {:global_symbol, name}
+    symbol = %GlobalSymbol{:name => name}
     ctx = put_in(ctx, [:symbol_table, name], symbol)
 
     params = List.foldl(params, [], fn({param_name, type}, params) ->
@@ -37,7 +57,7 @@ defmodule Millc.Name do
     end)
 
     body_ctx = List.foldl(params, ctx, fn({param_name, _type}, ctx) ->
-      param_symbol = {:local_symbol, param_name}
+      param_symbol = %LocalSymbol{:name => param_name}
       put_in(ctx, [:symbol_table, param_name], param_symbol)
     end)
 
@@ -90,11 +110,11 @@ defmodule Millc.Name do
   defp lookup_name(ctx, {:qualified_name, module_name_last, name}) do
     case ctx[:symbol_table][module_name_last] do
       nil -> raise "name '#{module_name_last}' not in scope"
-      {:module_symbol, module_name} ->
+      %ModuleSymbol{:module_name => module_name} ->
         module = ctx[:modules][module_name]
         exported_names = exported_names(module)
         if Set.member?(exported_names, name) do
-          {:member_symbol, module_name, name}
+          %MemberSymbol{:module_name => module_name, :name => name}
         else
           raise "name '#{name}' is not exported by module '#{module_name_last}'"
         end

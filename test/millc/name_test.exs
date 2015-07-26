@@ -1,4 +1,7 @@
 defmodule Millc.NameTest do
+  alias Millc.Name.MemberSymbol, as: MemberSymbol
+  alias Millc.Name.LocalSymbol, as: LocalSymbol
+
   use ExUnit.Case
 
   test "Hello, world!" do
@@ -34,7 +37,8 @@ defmodule Millc.NameTest do
               'console',
               {:name_type_expr,
                 {:qualified_name, 'log', 'Logger'},
-                %{:symbol => {:member_symbol, ['mill', 'log'], 'Logger'}},
+                %{:symbol => %MemberSymbol{:module_name => ['mill', 'log'],
+                                           :name => 'Logger'}},
               },
             },
           ],
@@ -44,12 +48,13 @@ defmodule Millc.NameTest do
               {:call_expr,
                 {:name_expr,
                   {:qualified_name, 'log', 'info'},
-                  %{:symbol => {:member_symbol, ['mill', 'log'], 'info'}},
+                  %{:symbol => %MemberSymbol{:module_name => ['mill', 'log'],
+                                             :name => 'info'}}
                 },
                 [
                   {:name_expr,
                     {:unqualified_name, 'console'},
-                    %{:symbol => {:local_symbol, 'console'}},
+                    %{:symbol => %LocalSymbol{:name => 'console'}},
                   },
                   {:string_literal_expr, 'Hello, world!', %{}},
                 ],
