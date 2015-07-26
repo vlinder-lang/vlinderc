@@ -14,6 +14,48 @@ defmodule Millc.SSA do
     end)
   end
 
+  def replace_instr_uses(cfg, of, to) do
+    replace = &(if &1 === of, do: to, else: &1)
+
+    cfg |> Dict.to_list |> List.foldl(%{}, fn({block_id, block}, acc) ->
+      block = Enum.map(block, fn({instr_id, instr}) ->
+        instr = case instr do
+          {:call, callee, args} ->
+            {:call, replace.(callee), Enum.map(args, replace)}
+
+          {:goto, block_id} ->
+            {:goto, block_id}
+
+          {:if, condition, then_id, else_id} ->
+            {:if, replace.(condition), then_id, else_id}
+
+          {:ldarg, index} ->
+            {:ldarg, index}
+
+          {:ldint, value} ->
+            {:ldint, value}
+
+          {:ldgbl, module_name, name} ->
+            {:ldgbl, module_name, name}
+
+          {:ldstr, value} ->
+            {:ldstr, value}
+
+          {:new, type} ->
+            {:new, type}
+
+          {:ret, value} ->
+            {:ret, replace.(value)}
+
+          {:tailcall, callee, args} ->
+            {:tailcall, replace.(callee), Enum.map(args, replace)}
+        end
+        {instr_id, instr}
+      end)
+      Dict.put(acc, block_id, block)
+    end)
+  end
+
   def dump(graph) do
     {:ok, builder} = Agent.start_link(fn() -> "" end)
     try do

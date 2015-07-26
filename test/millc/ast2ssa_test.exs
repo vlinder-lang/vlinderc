@@ -62,6 +62,8 @@ defmodule Millc.AST2SSATest do
     IO.inspect(graph)
     graph = Millc.Opt.TCO.optimize(graph)
     IO.inspect(graph)
+    graph = Millc.Opt.CIE.optimize(graph)
+    IO.inspect(graph)
     :ok = Millc.SSA.dump(graph)
   end
 end
