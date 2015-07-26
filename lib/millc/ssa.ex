@@ -98,6 +98,9 @@ defmodule Millc.SSA do
 
       {:ret, value} ->
         build.("ret #{value}")
+
+      {:tailcall, callee, args} ->
+        build.("tailcall #{callee} #{Enum.join(args, " ")}")
     end
 
     build.("""
