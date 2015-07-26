@@ -142,7 +142,7 @@ defmodule Millc.Type do
     %TupleType{:element_types => element_types}
   end
 
-  def descriptor({:tuple_type_expr, element_type_exprs, _meta}) do
-    "T#{element_type_exprs |> Enum.map(&descriptor(&1)) |> Enum.join("")};"
+  def descriptor(%TupleType{:element_types => element_types}) do
+    "T#{element_types |> Enum.map(&descriptor(&1)) |> Enum.join("")};"
   end
 end

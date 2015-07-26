@@ -7,6 +7,9 @@ defmodule Millc.AST2SSATest do
 
       sub main(console: log.Logger): () {
         log.info(console, "Hello, world!")
+        log.info(console, "Hello, world!")
+        log.info(console, "Hello, world!")
+        log.info(console, "Hello, world!")
       }
     """
     {:ok, main_tokens} = Millc.Lex.lex(main_code)
