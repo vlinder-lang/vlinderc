@@ -17,6 +17,7 @@ FOREIGN             = foreign
 IMPORT              = import
 STRUCT              = struct
 SUB                 = sub
+UNION               = union
 
 IDENTIFIER          = [a-zA-Z_][a-zA-Z_0-9]*
 
@@ -39,6 +40,7 @@ Rules.
 {IMPORT}            : {token, {import, TokenLine}}.
 {STRUCT}            : {token, {struct, TokenLine}}.
 {SUB}               : {token, {sub, TokenLine}}.
+{UNION}             : {token, {union, TokenLine}}.
 
 {IDENTIFIER}        : {token, {identifier, TokenLine, TokenChars}}.
 

@@ -1,7 +1,7 @@
 defmodule Millc.Name do
   defmodule Context do
     @derive [Access]
-    defstruct symbol_table: nil, modules: nil
+    defstruct symbol_table: nil, module: nil, modules: nil
   end
 
   defmodule ModuleSymbol do
@@ -14,11 +14,6 @@ defmodule Millc.Name do
     defstruct module_name: nil, name: nil
   end
 
-  defmodule GlobalSymbol do
-    @derive [Access]
-    defstruct name: nil
-  end
-
   defmodule LocalSymbol do
     @derive [Access]
     defstruct name: nil
@@ -27,6 +22,7 @@ defmodule Millc.Name do
   def resolve_module(module, modules) do
     ctx = %Context{
       :symbol_table => %{},
+      :module => module,
       :modules => modules,
     }
     {_, module} = resolve(ctx, modules[module])
@@ -49,7 +45,7 @@ defmodule Millc.Name do
   end
 
   defp resolve(ctx, {:sub_decl, name, params, return_type, body, meta}) do
-    symbol = %GlobalSymbol{:name => name}
+    symbol = %MemberSymbol{:module_name => ctx[:module], :name => name}
     ctx = put_in(ctx, [:symbol_table, name], symbol)
 
     params = List.foldl(params, [], fn({param_name, type}, params) ->
@@ -125,11 +121,11 @@ defmodule Millc.Name do
   defp exported_names({:module, decls, _meta}) do
     List.foldl(decls, HashSet.new, fn(decl, names) ->
       case decl do
-        {:import_decl, _module_name, _meta} ->
-          HashSet.empty
-
-        {:sub_decl, name, _params, _return_type, _body, _meta} ->
-          Set.put(names, name)
+        {:import_decl, _module_name, _meta} -> names
+        {:struct_decl, name, _fields, _meta} -> Set.put(names, name)
+        {:union_decl, name, _constructors, _meta} -> Set.put(names, name)
+        {:alias_decl, name, _aliases, _meta} -> Set.put(names, name)
+        {:sub_decl, name, _params, _return_type, _body, _meta} -> Set.put(names, name)
       end
     end)
   end

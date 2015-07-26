@@ -1,11 +1,16 @@
 Nonterminals
+    alias_decl
     block_expr
     call_expr
+    constructor
+    constructors0
     decl
     decls0
     expr
     exprs0
     exprs_comma0
+    field
+    fields0
     import_decl
     module
     module_name
@@ -13,24 +18,32 @@ Nonterminals
     name_expr
     param
     param_list
-    params0
+    params_comma0
     primary_expr
     string_literal_expr
+    struct_decl
     sub_decl
     type_expr
+    type_exprs_comma0
+    union_decl
 .
 
 Terminals
     colon
     comma
     dot
+    equals
+    fat_arrow
     lbrace
     lparen
     rbrace
     rparen
 
+    alias
     import
+    struct
     sub
+    union
 
     identifier
 
@@ -47,10 +60,11 @@ name ->
     identifier dot identifier
     : {qualified_name, token_value('$1'), token_value('$3')}.
 
-param_list -> lparen params0 rparen : '$2'.
+param_list -> lparen params_comma0 rparen : '$2'.
 
-params0 -> '$empty' : [].
-params0 -> param params0 : ['$1' | '$2'].
+params_comma0 -> '$empty' : [].
+params_comma0 -> param : ['$1'].
+params_comma0 -> param comma params_comma0 : ['$1' | '$3'].
 
 param -> identifier colon type_expr : {token_value('$1'), '$3'}.
 
@@ -60,9 +74,34 @@ decls0 -> '$empty' : [].
 decls0 -> decl decls0 : ['$1' | '$2'].
 
 decl -> import_decl : '$1'.
+decl -> alias_decl : '$1'.
+decl -> struct_decl : '$1'.
+decl -> union_decl : '$1'.
 decl -> sub_decl : '$1'.
 
 import_decl -> import module_name : {import_decl, '$2', #{}}.
+
+alias_decl ->
+    alias identifier equals type_expr
+    : {alias_decl, token_value('$2'), '$4', #{}}.
+
+struct_decl ->
+    struct identifier lbrace fields0 rbrace
+    : {struct_decl, token_value('$2'), $4, #{}}.
+
+fields0 -> '$empty' : [].
+fields0 -> field fields0 : ['$1' | '$2'].
+
+field -> identifier colon type_expr : {token_value('$1'), '$3'}.
+
+union_decl ->
+    union identifier lbrace constructors0 rbrace
+    : {union_decl, token_value('$2'), '$4', #{}}.
+
+constructors0 -> '$empty' : [].
+constructors0 -> constructor constructors0 : ['$1' | '$2'].
+
+constructor -> identifier : {'$1', []}.
 
 sub_decl ->
     sub identifier param_list colon type_expr block_expr
@@ -93,7 +132,14 @@ string_literal_expr ->
 
 block_expr -> lbrace exprs0 rbrace : {block_expr, '$2', #{}}.
 
+type_exprs_comma0 -> '$empty' : [].
+type_exprs_comma0 -> type_expr : ['$1'].
+type_exprs_comma0 -> type_expr comma type_exprs_comma0 : ['$1' | '$3'].
+
 type_expr -> name : {name_type_expr, '$1', #{}}.
+type_expr ->
+    lparen type_exprs_comma0 rparen fat_arrow type_expr
+    : {sub_type_expr, '$2', '$5', #{}}.
 type_expr -> lparen rparen : {tuple_type_expr, [], #{}}.
 
 Erlang code.

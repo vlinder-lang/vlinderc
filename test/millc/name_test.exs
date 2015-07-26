@@ -16,8 +16,22 @@ defmodule Millc.NameTest do
     {:ok, main} = Millc.Parse.parse(main_tokens)
 
     mill_log_code = """
-      sub Logger(): () { }
-      sub info(): () { }
+      union Level {
+        Debug
+        Info
+        Warning
+        Error
+        Critical
+      }
+
+      struct Record {
+        level: Level
+        message: String
+      }
+
+      alias Logger = (Record) => ()
+
+      sub info(logger: Logger, message: String): () { }
     """
     {:ok, mill_log_tokens} = Millc.Lex.lex(mill_log_code)
     {:ok, mill_log} = Millc.Parse.parse(mill_log_tokens)
