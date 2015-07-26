@@ -109,6 +109,6 @@ defmodule Millc.TypeTest do
     }
 
     {:ok, result} = type_check(modules)
-    IO.inspect(result)
+    # IO.inspect(result)
   end
 end

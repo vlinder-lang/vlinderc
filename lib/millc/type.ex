@@ -1,7 +1,7 @@
 defmodule Millc.Type do
   alias Millc.Name.ModuleSymbol, as: ModuleSymbol
   alias Millc.Name.MemberSymbol, as: MemberSymbol
-  alias Millc.Name.LocalSymbol, as: LocalSymbol
+  alias Millc.Name.ParamSymbol, as: ParamSymbol
   alias Millc.Name.BuiltinSymbol, as: BuiltinSymbol
 
   defmodule StringType do
@@ -122,8 +122,8 @@ defmodule Millc.Type do
         raise "this is a module, not a type"
       %MemberSymbol{:module_name => module_name, :name => name} ->
         %NamedType{:name => {module_name, name}}
-      %LocalSymbol{} ->
-        raise "local types are not yet supported"
+      %ParamSymbol{} ->
+        raise "this is a parameter, not a type"
       %BuiltinSymbol{:name => name} ->
         case name do
           "__String" -> %StringType{}
@@ -140,5 +140,9 @@ defmodule Millc.Type do
   defp type_expr_to_type({:tuple_type_expr, element_type_exprs, _meta}) do
     element_types = Enum.map(element_type_exprs, &type_expr_to_type(&1))
     %TupleType{:element_types => element_types}
+  end
+
+  def descriptor({:tuple_type_expr, element_type_exprs, _meta}) do
+    "T#{element_type_exprs |> Enum.map(&descriptor(&1)) |> Enum.join("")};"
   end
 end

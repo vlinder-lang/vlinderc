@@ -87,8 +87,14 @@ defmodule Millc.SSA do
       {:ldint, value} ->
         build.("ldint #{value}")
 
-      {:ldgbl, name} ->
-        build.("ldgbl #{Enum.join(name, ".")}")
+      {:ldgbl, module_name, name} ->
+        build.("ldgbl #{Enum.join(module_name, ".")} #{name}")
+
+      {:ldstr, value} ->
+        build.("ldstr #{inspect(value)}")
+
+      {:new, type} ->
+        build.("new #{Millc.Type.descriptor(type)}")
 
       {:ret, value} ->
         build.("ret #{value}")

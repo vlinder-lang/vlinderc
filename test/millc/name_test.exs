@@ -1,6 +1,6 @@
 defmodule Millc.NameTest do
   alias Millc.Name.MemberSymbol, as: MemberSymbol
-  alias Millc.Name.LocalSymbol, as: LocalSymbol
+  alias Millc.Name.ParamSymbol, as: ParamSymbol
 
   use ExUnit.Case
 
@@ -80,7 +80,7 @@ defmodule Millc.NameTest do
                 [
                   {:name_expr,
                     {:unqualified_name, "console"},
-                    %{:symbol => %LocalSymbol{:name => "console"}},
+                    %{:symbol => %ParamSymbol{:index => 0}},
                   },
                   {:string_literal_expr, "Hello, world!", %{}},
                 ],

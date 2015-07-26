@@ -14,9 +14,9 @@ defmodule Millc.Name do
     defstruct module_name: nil, name: nil
   end
 
-  defmodule LocalSymbol do
+  defmodule ParamSymbol do
     @derive [Access]
-    defstruct name: nil
+    defstruct index: nil
   end
 
   defmodule BuiltinSymbol do
@@ -83,10 +83,13 @@ defmodule Millc.Name do
       params ++ [{param_name, resolve(ctx, type)}]
     end)
 
-    body_ctx = List.foldl(params, ctx, fn({param_name, _type}, ctx) ->
-      param_symbol = %LocalSymbol{:name => param_name}
-      put_in(ctx, [:symbol_table, param_name], param_symbol)
-    end)
+    body_ctx =
+      params
+      |> Enum.with_index()
+      |> List.foldl(ctx, fn({{param_name, _type}, index}, ctx) ->
+        param_symbol = %ParamSymbol{:index => index}
+        put_in(ctx, [:symbol_table, param_name], param_symbol)
+      end)
 
     return_type = resolve(ctx, return_type)
 
