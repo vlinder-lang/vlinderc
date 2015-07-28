@@ -1,0 +1,20 @@
+alias String = __String
+
+union Level {
+    Debug
+    Info
+    Warning
+    Error
+    Critical
+}
+
+struct Record {
+    level: Level
+    message: String
+}
+
+alias Logger = (Record) => ()
+
+sub info(logger: Logger, message: String): () {
+    -- TODO: add stuff here
+}

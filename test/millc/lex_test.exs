@@ -3,7 +3,7 @@ defmodule Millc.LexTest do
 
   test "Hello, world!" do
     code = """
-      import mill.log
+      import mill.log -- single-line comment
 
       sub main(console: log.Logger): () {
         log.info(console, "Hello, world!")

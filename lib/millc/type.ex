@@ -68,6 +68,10 @@ defmodule Millc.Type do
 
   defmodule TypeError do
     defexception [:message]
+
+    def exception(message) do
+      %TypeError{message: message}
+    end
   end
 
   defmodule Context do
@@ -82,29 +86,34 @@ defmodule Millc.Type do
       :param_types => nil,
     }
 
-    ctx =
-      modules
-      |> Dict.to_list()
-      |> List.foldl(ctx, fn({module_name, module}, ctx) ->
-        register_decl_types(ctx, module_name, module)
-      end)
+    try do
+      ctx =
+        modules
+        |> Dict.to_list()
+        |> List.foldl(ctx, fn({module_name, module}, ctx) ->
+          register_decl_types(ctx, module_name, module)
+        end)
 
-    ctx =
-      modules
-      |> Dict.to_list()
-      |> List.foldl(ctx, fn({module_name, module}, ctx) ->
-        register_member_types(ctx, module_name, module)
-      end)
+      ctx =
+        modules
+        |> Dict.to_list()
+        |> List.foldl(ctx, fn({module_name, module}, ctx) ->
+          register_member_types(ctx, module_name, module)
+        end)
 
-    modules =
-      modules
-      |> Dict.to_list()
-      |> List.foldl(%{}, fn({module_name, module}, acc) ->
-        module = typecheck(ctx, module)
-        Dict.put(acc, module_name, module)
-      end)
+      modules =
+        modules
+        |> Dict.to_list()
+        |> List.foldl(%{}, fn({module_name, module}, acc) ->
+          module = typecheck(ctx, module)
+          Dict.put(acc, module_name, module)
+        end)
 
-    {:ok, modules}
+      {:ok, modules}
+    rescue
+      e in TypeError ->
+        {:error, e}
+    end
   end
 
   defp typecheck(ctx, {:module, decls, meta}) do
@@ -138,7 +147,7 @@ defmodule Millc.Type do
     body_type = Millc.AST.meta(body)[:type]
     return_type = type_expr_to_type(return_type_expr)
     if !subtype?(ctx, body_type, return_type) do
-      raise TypeError, "expected '#{format(return_type)}' but got '#{body_type}'"
+      raise TypeError, "expected '#{format(return_type)}' but got '#{format(body_type)}'"
     end
     {:sub_decl, name, params, return_type_expr, body, meta}
   end

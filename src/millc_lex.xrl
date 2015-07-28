@@ -1,6 +1,6 @@
 Definitions.
 
-WHITESPACE          = [\s\n]+
+WHITESPACE          = [\s\n]+|--[^\n]*
 
 COLON               = :
 COMMA               = ,

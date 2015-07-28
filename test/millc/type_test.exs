@@ -1,5 +1,27 @@
+defmodule Millc.TypeTest.Helpers do
+  defmacro ok(name) do
+    quote do
+      test unquote(name) do
+        modules = module(unquote(name))
+        {:ok, _result} = Millc.Type.typecheck(modules)
+      end
+    end
+  end
+
+  defmacro error(name, expected_error) do
+    quote do
+      test unquote(name) do
+        modules = module(unquote(name))
+        {:error, error} = Millc.Type.typecheck(modules)
+        assert(error === unquote(expected_error))
+      end
+    end
+  end
+end
+
 defmodule Millc.TypeTest do
-  import Millc.Type
+  use ExUnit.Case
+  import Millc.TypeTest.Helpers
 
   alias Millc.Type.StringType, as: StringType
   alias Millc.Type.TupleType, as: TupleType
@@ -10,7 +32,7 @@ defmodule Millc.TypeTest do
   alias Millc.Type.StructDeclType, as: StructDeclType
   alias Millc.Type.AliasDeclType, as: AliasDeclType
 
-  use ExUnit.Case
+  alias Millc.Type.TypeError, as: TypeError
 
   test "same_type?" do
     decl_types = %{
@@ -62,58 +84,24 @@ defmodule Millc.TypeTest do
       },
     ]
     |> Enum.each(fn({a, b}) ->
-      assert(same_type?(decl_types, a, b))
+      assert(Millc.Type.same_type?(decl_types, a, b))
     end)
   end
 
-  test "typecheck" do
-    mill_text_code = """
-      alias String = __String
-    """
-    {:ok, mill_text_tokens} = Millc.Lex.lex(mill_text_code)
-    {:ok, mill_text} = Millc.Parse.parse(mill_text_tokens)
-
-    mill_log_code = """
-      import mill.text
-
-      union Level {
-        Debug
-        Info
-        Warning
-        Error
-        Critical
-      }
-
-      struct Record {
-        level: Level
-        message: text.String
-      }
-
-      alias Logger = (Record) => ()
-
-      sub info(logger: Logger, message: text.String): () { }
-
-      sub main(console: Logger): () {
-        info(console, "Hello, world!")
-      }
-    """
-    {:ok, mill_log_tokens} = Millc.Lex.lex(mill_log_code)
-    {:ok, mill_log} = Millc.Parse.parse(mill_log_tokens)
-
-    modules = %{
-      ["mill", "text"] => mill_text,
-      ["mill", "log"] => mill_log,
-    }
-
-    {:ok, mill_text} = Millc.Name.resolve_module(["mill", "text"], modules)
-    {:ok, mill_log} = Millc.Name.resolve_module(["mill", "log"], modules)
-
-    modules = %{
-      ["mill", "text"] => mill_text,
-      ["mill", "log"] => mill_log,
-    }
-
-    {:ok, result} = typecheck(modules)
-    IO.inspect(result)
+  defp module(name) do
+    file = "#{__DIR__}/type_test_data/#{name}"
+    {:ok, code} = File.read(file)
+    {:ok, tokens} = Millc.Lex.lex(code)
+    {:ok, module} = Millc.Parse.parse(tokens)
+    {:ok, module} = Millc.Name.resolve_module(["m"], %{["m"] => module})
+    %{["m"] => module}
   end
+
+  ok("ok/empty.mill")
+  ok("ok/text.mill")
+  ok("ok/return_type.mill")
+  ok("ok/kitchen_sink.mill")
+
+  error("error/return_type.mill", %TypeError{message: "expected '()' but got 'mill.text.String'"})
+  error("error/non_unit.mill", %TypeError{message: "all but the last expressions in a block must be of type '()'"})
 end
