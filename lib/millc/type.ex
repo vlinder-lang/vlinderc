@@ -203,9 +203,13 @@ defmodule Millc.Type do
   defp typecheck(ctx, {:call_expr, callee, args, meta}) do
     callee = typecheck(ctx, callee)
     callee_type = Millc.AST.meta(callee)[:type]
-    case callee_type do
-      %SubType{} -> :ok
-      _          -> raise TypeError, "callee is not of a subroutine type"
+    return_type = case callee_type do
+      %SubType{return_type: return_type} ->
+        return_type
+      %BottomType{} ->
+        %BottomType{}
+      _ ->
+        raise TypeError, "callee is not of a subroutine type"
     end
 
     args =
@@ -213,15 +217,17 @@ defmodule Millc.Type do
       |> Enum.with_index()
       |> Enum.map(fn({arg, i}) ->
         arg = typecheck(ctx, arg)
-        expected_type = Enum.at(callee_type[:param_types], i)
-        actual_type = Millc.AST.meta(arg)[:type]
-        if !subtype?(ctx[:decl_types], actual_type, expected_type) do
-          raise TypeError, "expected '#{expected_type}' but got '#{actual_type}'"
+        unless same_type?(ctx[:decl_types], callee_type, %BottomType{}) do
+          expected_type = Enum.at(callee_type[:param_types], i)
+          actual_type = Millc.AST.meta(arg)[:type]
+          if !subtype?(ctx[:decl_types], actual_type, expected_type) do
+            raise TypeError, "expected '#{expected_type}' but got '#{actual_type}'"
+          end
         end
         arg
       end)
 
-    meta = Dict.put(meta, :type, callee_type[:return_type])
+    meta = Dict.put(meta, :type, return_type)
 
     {:call_expr, callee, args, meta}
   end

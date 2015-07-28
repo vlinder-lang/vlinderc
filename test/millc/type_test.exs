@@ -101,6 +101,7 @@ defmodule Millc.TypeTest do
   ok("ok/text.mill")
   ok("ok/return_type.mill")
   ok("ok/kitchen_sink.mill")
+  ok("ok/call_bottom.mill")
 
   error("error/return_type.mill", %TypeError{message: "expected '()' but got 'mill.text.String'"})
   error("error/non_unit.mill", %TypeError{message: "all but the last expressions in a block must be of type '()'"})
