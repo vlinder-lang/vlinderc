@@ -1,5 +1,6 @@
 defmodule Millc.TypeTest do
   import Millc.Type
+
   alias Millc.Type.StringType, as: StringType
   alias Millc.Type.TupleType, as: TupleType
   alias Millc.Type.SubType, as: SubType
@@ -65,7 +66,7 @@ defmodule Millc.TypeTest do
     end)
   end
 
-  test "type_check" do
+  test "typecheck" do
     mill_text_code = """
       alias String = __String
     """
@@ -91,6 +92,10 @@ defmodule Millc.TypeTest do
       alias Logger = (Record) => ()
 
       sub info(logger: Logger, message: text.String): () { }
+
+      sub main(console: Logger): () {
+        info(console, "Hello, world!")
+      }
     """
     {:ok, mill_log_tokens} = Millc.Lex.lex(mill_log_code)
     {:ok, mill_log} = Millc.Parse.parse(mill_log_tokens)
@@ -108,7 +113,7 @@ defmodule Millc.TypeTest do
       ["mill", "log"] => mill_log,
     }
 
-    {:ok, result} = type_check(modules)
-    # IO.inspect(result)
+    {:ok, result} = typecheck(modules)
+    IO.inspect(result)
   end
 end

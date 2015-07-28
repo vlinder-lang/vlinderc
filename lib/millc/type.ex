@@ -68,19 +68,152 @@ defmodule Millc.Type do
 
   defmodule Context do
     @derive [Access]
-    defstruct decl_types: nil
+    defstruct decl_types: nil, member_types: nil, param_types: nil
   end
 
-  def type_check(modules) do
+  def typecheck(modules) do
     ctx = %Context{
       :decl_types => %{},
+      :member_types => %{},
+      :param_types => nil,
     }
 
-    ctx = Dict.to_list(modules) |> List.foldl(ctx, fn({module_name, module}, ctx) ->
-      register_decl_types(ctx, module_name, module)
-    end)
+    ctx =
+      modules
+      |> Dict.to_list()
+      |> List.foldl(ctx, fn({module_name, module}, ctx) ->
+        register_decl_types(ctx, module_name, module)
+      end)
+
+    ctx =
+      modules
+      |> Dict.to_list()
+      |> List.foldl(ctx, fn({module_name, module}, ctx) ->
+        register_member_types(ctx, module_name, module)
+      end)
+
+    modules =
+      modules
+      |> Dict.to_list()
+      |> List.foldl(%{}, fn({module_name, module}, acc) ->
+        module = typecheck(ctx, module)
+        Dict.put(acc, module_name, module)
+      end)
 
     {:ok, modules}
+  end
+
+  defp typecheck(ctx, {:module, decls, meta}) do
+    decls = Enum.map(decls, &typecheck(ctx, &1))
+    {:module, decls, meta}
+  end
+
+  defp typecheck(ctx, decl = {:import_decl, _module_name, _meta}) do
+    decl
+  end
+
+  defp typecheck(ctx, decl = {:struct_decl, _name, _fields, _meta}) do
+    decl
+  end
+
+  defp typecheck(ctx, decl = {:union_decl, _name, _constructors, _meta}) do
+    decl
+  end
+
+  defp typecheck(ctx, decl = {:alias_decl, _name, _aliases, _meta}) do
+    decl
+  end
+
+  defp typecheck(ctx, {:sub_decl, name, params, return_type_expr, body, meta}) do
+    ctx = put_in(ctx, [:param_types], [])
+    ctx = List.foldl(params, ctx, fn({_param_name, param_type_expr}, ctx) ->
+        param_type = type_expr_to_type(param_type_expr)
+        update_in(ctx, [:param_types], &(&1 ++ [param_type]))
+      end)
+    body = typecheck(ctx, body)
+    body_type = Millc.AST.meta(body)[:type]
+    return_type = type_expr_to_type(return_type_expr)
+    if !subtype?(ctx, body_type, return_type) do
+      raise "bad type of subroutine body"
+    end
+    {:sub_decl, name, params, return_type_expr, body, meta}
+  end
+
+  defp typecheck(ctx, {:block_expr, exprs, meta}) do
+    if exprs === [] do
+      type = %TupleType{element_types: []}
+      {:block_expr, [], Dict.put(meta, :type, type)}
+    else
+      init_exprs =
+        :lists.droplast(exprs)
+        |> Enum.map(fn(expr) ->
+          expr = typecheck(ctx, expr)
+          expr_type = Millc.AST.meta(expr)[:type]
+          if !subtype?(ctx[:decl_types], expr_type, %TupleType{element_types: []}) do
+            raise "all but the last expressions in a block expression must be of type '()'"
+          end
+          expr
+        end)
+
+      last_expr = typecheck(ctx, List.last(exprs))
+      last_expr_type = Millc.AST.meta(last_expr)[:type]
+
+      exprs = init_exprs ++ [last_expr]
+      meta = Dict.put(meta, :type, last_expr_type)
+      {:block_expr, exprs, meta}
+    end
+  end
+
+  defp typecheck(ctx, {:name_expr, name, meta}) do
+    type = case meta[:symbol] do
+      %ModuleSymbol{} ->
+        raise "this is a module, which has no type"
+
+      %MemberSymbol{module_name: module_name, name: name} ->
+        ctx[:member_types][{module_name, name}]
+
+      %ParamSymbol{index: index} ->
+        Enum.at(ctx[:param_types], index)
+
+      %BuiltinSymbol{} ->
+        raise "you're fucked"
+    end
+    meta = Dict.put(meta, :type, type)
+    {:name_expr, name, meta}
+  end
+
+  defp typecheck(ctx, {:call_expr, callee, args, meta}) do
+    callee = typecheck(ctx, callee)
+    callee_type = Millc.AST.meta(callee)[:type]
+    case callee_type do
+      %SubType{} -> :ok
+      _          -> raise "callee is not of a subroutine type"
+    end
+
+    args =
+      args
+      |> Enum.with_index()
+      |> Enum.map(fn({arg, i}) ->
+        arg = typecheck(ctx, arg)
+        expected_type = Enum.at(callee_type[:param_types], i)
+        actual_type = Millc.AST.meta(arg)[:type]
+        if !subtype?(ctx[:decl_types], actual_type, expected_type) do
+          raise "wrong argument type"
+        end
+        arg
+      end)
+
+    meta = Dict.put(meta, :type, callee_type[:return_type])
+
+    {:call_expr, callee, args, meta}
+  end
+
+  defp typecheck(ctx, {:name_expr, name, meta}) do
+    {:name_expr, name, meta}
+  end
+
+  defp typecheck(ctx, {:string_literal_expr, value, meta}) do
+    {:string_literal_expr, value, Dict.put(meta, :type, %StringType{})}
   end
 
   defp register_decl_types(ctx, module_name, {:module, decls, _meta}) do
@@ -114,6 +247,37 @@ defmodule Millc.Type do
 
   defp register_decl_types(ctx, _module_name, {:sub_decl, _, _, _, _, _meta}) do
     ctx
+  end
+
+  defp register_member_types(ctx, module_name, {:module, decls, _meta}) do
+    List.foldl(decls, ctx, fn(decl, ctx) ->
+      register_member_types(ctx, module_name, decl)
+    end)
+  end
+
+  defp register_member_types(ctx, _module_name, {:import_decl, _, _meta}) do
+    ctx
+  end
+
+  defp register_member_types(ctx, _module_name, {:struct_decl, _, _, _meta}) do
+    ctx
+  end
+
+  defp register_member_types(ctx, _module_name, {:union_decl, _, _, _meta}) do
+    ctx
+  end
+
+  defp register_member_types(ctx, _module_name, {:alias_decl, _, _, _meta}) do
+    ctx
+  end
+
+  defp register_member_types(ctx, module_name, {:sub_decl, name, params, return_type_expr, _body, _meta}) do
+    param_types = Enum.map(params, fn({_param_name, param_type_expr}) ->
+      type_expr_to_type(param_type_expr)
+    end)
+    return_type = type_expr_to_type(return_type_expr)
+    type = %SubType{param_types: param_types, return_type: return_type}
+    put_in(ctx, [:member_types, {module_name, name}], type)
   end
 
   defp type_expr_to_type({:name_type_expr, _name, meta}) do
