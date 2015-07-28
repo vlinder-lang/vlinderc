@@ -66,6 +66,10 @@ defmodule Millc.Type do
     end
   end
 
+  defmodule TypeError do
+    defexception [:message]
+  end
+
   defmodule Context do
     @derive [Access]
     defstruct decl_types: nil, member_types: nil, param_types: nil
@@ -134,7 +138,7 @@ defmodule Millc.Type do
     body_type = Millc.AST.meta(body)[:type]
     return_type = type_expr_to_type(return_type_expr)
     if !subtype?(ctx, body_type, return_type) do
-      raise "bad type of subroutine body"
+      raise TypeError, "expected '#{format(return_type)}' but got '#{body_type}'"
     end
     {:sub_decl, name, params, return_type_expr, body, meta}
   end
@@ -149,8 +153,9 @@ defmodule Millc.Type do
         |> Enum.map(fn(expr) ->
           expr = typecheck(ctx, expr)
           expr_type = Millc.AST.meta(expr)[:type]
-          if !subtype?(ctx[:decl_types], expr_type, %TupleType{element_types: []}) do
-            raise "all but the last expressions in a block expression must be of type '()'"
+          expected_type = %TupleType{element_types: []}
+          if !subtype?(ctx[:decl_types], expr_type, expected_type) do
+            raise TypeError, "all but the last expressions in a block must be of type '#{format(expected_type)}'"
           end
           expr
         end)
@@ -187,7 +192,7 @@ defmodule Millc.Type do
     callee_type = Millc.AST.meta(callee)[:type]
     case callee_type do
       %SubType{} -> :ok
-      _          -> raise "callee is not of a subroutine type"
+      _          -> raise TypeError, "callee is not of a subroutine type"
     end
 
     args =
@@ -198,7 +203,7 @@ defmodule Millc.Type do
         expected_type = Enum.at(callee_type[:param_types], i)
         actual_type = Millc.AST.meta(arg)[:type]
         if !subtype?(ctx[:decl_types], actual_type, expected_type) do
-          raise "wrong argument type"
+          raise TypeError, "expected '#{expected_type}' but got '#{actual_type}'"
         end
         arg
       end)
@@ -283,11 +288,11 @@ defmodule Millc.Type do
   defp type_expr_to_type({:name_type_expr, _name, meta}) do
     case meta[:symbol] do
       %ModuleSymbol{} ->
-        raise "this is a module, not a type"
+        raise TypeError, "expected a type name but got a module name"
       %MemberSymbol{:module_name => module_name, :name => name} ->
         %NamedType{:name => {module_name, name}}
       %ParamSymbol{} ->
-        raise "this is a parameter, not a type"
+        raise TypeError, "expected a type name but got a parameter name"
       %BuiltinSymbol{:name => name} ->
         case name do
           "__String" -> %StringType{}
@@ -304,6 +309,22 @@ defmodule Millc.Type do
   defp type_expr_to_type({:tuple_type_expr, element_type_exprs, _meta}) do
     element_types = Enum.map(element_type_exprs, &type_expr_to_type(&1))
     %TupleType{:element_types => element_types}
+  end
+
+  def format(%StringType{}) do
+    "mill.text.String"
+  end
+
+  def format(%TupleType{element_types: element_types}) do
+    "(#{element_types |> Enum.map(&format(&1)) |> Enum.join(", ")})"
+  end
+
+  def format(%SubType{param_types: param_types, return_type: return_type}) do
+    "(#{param_types |> Enum.map(&format(&1)) |> Enum.join(", ")}) => #{format(return_type)}"
+  end
+
+  def format(%NamedType{name: {module_name, name}}) do
+    "#{module_name |> Enum.join(".")}.#{name}"
   end
 
   def descriptor(%TupleType{:element_types => element_types}) do
