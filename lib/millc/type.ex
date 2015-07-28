@@ -4,9 +4,9 @@ defmodule Millc.Type do
   alias Millc.Name.ParamSymbol, as: ParamSymbol
   alias Millc.Name.BuiltinSymbol, as: BuiltinSymbol
 
-  defmodule StringType do
-    defstruct []
-  end
+  defmodule TopType, do: defstruct []
+  defmodule BottomType, do: defstruct []
+  defmodule StringType, do: defstruct []
 
   defmodule TupleType do
     @derive [Access]
@@ -39,7 +39,11 @@ defmodule Millc.Type do
   end
 
   def subtype?(decl_types, a, b) do
-    same_type?(decl_types, a, b)
+    case {a, b} do
+      {_, %TopType{}} -> true
+      {%BottomType{}, _} -> true
+      {a, b} -> same_type?(decl_types, a, b)
+    end
   end
 
   def supertype?(decl_types, a, b) do
@@ -304,6 +308,8 @@ defmodule Millc.Type do
         raise TypeError, "expected a type name but got a parameter name"
       %BuiltinSymbol{:name => name} ->
         case name do
+          "__Top" -> %TopType{}
+          "__Bottom" -> %BottomType{}
           "__String" -> %StringType{}
         end
     end
@@ -320,9 +326,9 @@ defmodule Millc.Type do
     %TupleType{:element_types => element_types}
   end
 
-  def format(%StringType{}) do
-    "mill.text.String"
-  end
+  def format(%TopType{}), do: "mill.type.Top"
+  def format(%BottomType{}), do: "mill.type.Bottom"
+  def format(%StringType{}), do: "mill.text.String"
 
   def format(%TupleType{element_types: element_types}) do
     "(#{element_types |> Enum.map(&format(&1)) |> Enum.join(", ")})"

@@ -27,6 +27,8 @@ defmodule Millc.Name do
   def resolve_module(module_name, modules) do
     ctx = %Context{
       :symbol_table => %{
+        "__Top" => %BuiltinSymbol{:name => "__Top"},
+        "__Bottom" => %BuiltinSymbol{:name => "__Bottom"},
         "__String" => %BuiltinSymbol{:name => "__String"},
       },
       :module_name => module_name,

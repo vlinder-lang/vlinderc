@@ -1,1 +1,7 @@
 sub f(): __String { "x" }
+
+sub g(): __Top { "x" }
+
+sub h(): __Bottom { h() }
+
+sub i(): __String { h() }
