@@ -7,7 +7,8 @@ defmodule Millc.Mixfile do
      elixir: "~> 1.0",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps]
+     deps: deps,
+     escript: escript]
   end
 
   # Configuration for the OTP application
@@ -15,6 +16,10 @@ defmodule Millc.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [applications: [:logger]]
+  end
+
+  def escript do
+    [main_module: Millc.Main]
   end
 
   # Dependencies can be Hex packages:
