@@ -93,7 +93,7 @@ defmodule Millc.SSA2Bytecode do
         Builder.store(builder, instr_id)
 
       {:ret, value} ->
-        Builder.load(value)
+        Builder.load(builder, value)
         Builder.append(builder, %{opcode: "ret"})
 
       {:tailcall, callee, args} ->

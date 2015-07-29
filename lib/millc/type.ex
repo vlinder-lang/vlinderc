@@ -144,9 +144,9 @@ defmodule Millc.Type do
   defp typecheck(ctx, {:sub_decl, name, params, return_type_expr, body, meta}) do
     ctx = put_in(ctx, [:param_types], [])
     ctx = List.foldl(params, ctx, fn({_param_name, param_type_expr}, ctx) ->
-        param_type = type_expr_to_type(param_type_expr)
-        update_in(ctx, [:param_types], &(&1 ++ [param_type]))
-      end)
+      param_type = type_expr_to_type(param_type_expr)
+      update_in(ctx, [:param_types], &(&1 ++ [param_type]))
+    end)
     body = typecheck(ctx, body)
     body_type = Millc.AST.meta(body)[:type]
     return_type = type_expr_to_type(return_type_expr)
@@ -208,8 +208,8 @@ defmodule Millc.Type do
         return_type
       %BottomType{} ->
         %BottomType{}
-      _ ->
-        raise TypeError, "callee is not of a subroutine type"
+      t ->
+        raise TypeError, "expected subroutine but got '#{format(t)}'"
     end
 
     args =
@@ -221,7 +221,7 @@ defmodule Millc.Type do
           expected_type = Enum.at(callee_type[:param_types], i)
           actual_type = Millc.AST.meta(arg)[:type]
           if !subtype?(ctx[:decl_types], actual_type, expected_type) do
-            raise TypeError, "expected '#{expected_type}' but got '#{actual_type}'"
+            raise TypeError, "expected '#{format(expected_type)}' but got '#{format(actual_type)}'"
           end
         end
         arg
@@ -230,10 +230,6 @@ defmodule Millc.Type do
     meta = Dict.put(meta, :type, return_type)
 
     {:call_expr, callee, args, meta}
-  end
-
-  defp typecheck(ctx, {:name_expr, name, meta}) do
-    {:name_expr, name, meta}
   end
 
   defp typecheck(ctx, {:string_literal_expr, value, meta}) do
@@ -304,7 +300,7 @@ defmodule Millc.Type do
     put_in(ctx, [:member_types, {module_name, name}], type)
   end
 
-  defp type_expr_to_type({:name_type_expr, _name, meta}) do
+  def type_expr_to_type({:name_type_expr, _name, meta}) do
     case meta[:symbol] do
       %ModuleSymbol{} ->
         raise TypeError, "expected a type name but got a module name"
@@ -321,13 +317,13 @@ defmodule Millc.Type do
     end
   end
 
-  defp type_expr_to_type({:sub_type_expr, param_type_exprs, return_type_expr, _meta}) do
+  def type_expr_to_type({:sub_type_expr, param_type_exprs, return_type_expr, _meta}) do
     param_types = Enum.map(param_type_exprs, &type_expr_to_type(&1))
     return_type = type_expr_to_type(return_type_expr)
     %SubType{:param_types => param_types, :return_type => return_type}
   end
 
-  defp type_expr_to_type({:tuple_type_expr, element_type_exprs, _meta}) do
+  def type_expr_to_type({:tuple_type_expr, element_type_exprs, _meta}) do
     element_types = Enum.map(element_type_exprs, &type_expr_to_type(&1))
     %TupleType{:element_types => element_types}
   end
@@ -348,7 +344,20 @@ defmodule Millc.Type do
     "#{module_name |> Enum.join(".")}.#{name}"
   end
 
+  defmodule TopType, do: defstruct []
+  def descriptor(%TopType{}), do: "1"
+  def descriptor(%BottomType{}), do: "0"
+  def descriptor(%StringType{}), do: "S"
+
   def descriptor(%TupleType{:element_types => element_types}) do
     "T#{element_types |> Enum.map(&descriptor(&1)) |> Enum.join("")};"
+  end
+
+  def descriptor(%SubType{param_types: param_types, return_type: return_type}) do
+    "F#{param_types |> Enum.map(&descriptor(&1)) |> Enum.join("")}#{descriptor(return_type)};"
+  end
+
+  def descriptor(%NamedType{name: {module_name, name}}) do
+    "N#{module_name |> Enum.join(".")}#{name};"
   end
 end
