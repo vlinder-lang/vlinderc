@@ -34,8 +34,16 @@ defmodule Millc.Assembly do
     []
   end
 
-  defp aliases(_module) do
-    []
+  defp aliases({:module, decls, _meta}) do
+    Enum.flat_map(decls, fn(decl) ->
+      case decl do
+        {:alias_decl, name, aliases_type_expr, _meta} ->
+          aliases = Millc.Type.type_expr_to_type(aliases_type_expr)
+          [%{name: name, type: Millc.Type.descriptor(aliases)}]
+        _ ->
+          []
+      end
+    end)
   end
 
   defp subs({:module, decls, _meta}) do
