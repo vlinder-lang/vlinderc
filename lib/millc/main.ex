@@ -5,7 +5,7 @@ defmodule Millc.Main do
     |> typecheck()
     |> assemble()
     |> Enum.each(fn({name, data}) ->
-      path = Path.join(output_dir, Enum.join(name, ".") <> ".millo")
+      path = Path.join(output_dir, Enum.join(name, ".") <> ".millm")
       File.write!(path, data)
     end)
   end
