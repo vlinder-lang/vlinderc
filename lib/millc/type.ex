@@ -358,6 +358,6 @@ defmodule Millc.Type do
   end
 
   def descriptor(%NamedType{name: {module_name, name}}) do
-    "N#{module_name |> Enum.join(".")}#{name};"
+    "N#{module_name |> Enum.join(".")}.#{name};"
   end
 end
