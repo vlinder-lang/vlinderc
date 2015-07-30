@@ -344,7 +344,6 @@ defmodule Millc.Type do
     "#{module_name |> Enum.join(".")}.#{name}"
   end
 
-  defmodule TopType, do: defstruct []
   def descriptor(%TopType{}), do: "1"
   def descriptor(%BottomType{}), do: "0"
   def descriptor(%StringType{}), do: "S"
