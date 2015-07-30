@@ -65,8 +65,12 @@ defmodule Millc.Name do
   end
 
   defp resolve(ctx, {:union_decl, name, constructors, meta}) do
-    symbol = %MemberSymbol{:module_name => ctx[:module_name], :name => name}
+    symbol = %MemberSymbol{module_name: ctx[:module_name], name: name}
     ctx = put_in(ctx, [:symbol_table, name], symbol)
+    ctx = List.foldl(constructors, ctx, fn({constructor_name, []}, ctx) ->
+      symbol = %MemberSymbol{module_name: ctx[:module_name], name: constructor_name}
+      put_in(ctx, [:symbol_table, constructor_name], symbol)
+    end)
     {ctx, {:union_decl, name, constructors, meta}}
   end
 
@@ -114,6 +118,14 @@ defmodule Millc.Name do
 
   defp resolve(_ctx, expr = {:string_literal_expr, _, _}) do
     expr
+  end
+
+  defp resolve(ctx, {:struct_literal_expr, type, fields, meta}) do
+    type = resolve(ctx, type)
+    fields = Enum.map(fields, fn({field_name, field_type}) ->
+      {field_name, resolve(ctx, field_type)}
+    end)
+    {:struct_literal_expr, type, fields, meta}
   end
 
   defp resolve(ctx, {:block_expr, exprs, meta}) do

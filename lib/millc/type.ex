@@ -202,7 +202,7 @@ defmodule Millc.Type do
 
   defp typecheck(ctx, {:call_expr, callee, args, meta}) do
     callee = typecheck(ctx, callee)
-    callee_type = Millc.AST.meta(callee)[:type]
+    callee_type = resolve_aliases(ctx[:decl_types], Millc.AST.meta(callee)[:type])
     return_type = case callee_type do
       %SubType{return_type: return_type} ->
         return_type
@@ -234,6 +234,39 @@ defmodule Millc.Type do
 
   defp typecheck(ctx, {:string_literal_expr, value, meta}) do
     {:string_literal_expr, value, Dict.put(meta, :type, %StringType{})}
+  end
+
+  defp typecheck(ctx, {:struct_literal_expr, type_expr, fields, meta}) do
+    type = type_expr_to_type(type_expr)
+
+    required_fields = case resolve_aliases(ctx[:decl_types], type) do
+      %NamedType{name: name} ->
+        case ctx[:decl_types][name] do
+          %StructDeclType{fields: fields} -> fields
+          _ -> raise TypeError, "only struct types can be used in struct literals"
+        end
+      _ ->
+        raise TypeError, "only struct types can be used in struct literals"
+    end
+
+    unless Set.equal?(
+      Enum.into(fields, HashSet.new, fn({name, _type}) -> name end),
+      Enum.into(required_fields, HashSet.new, fn({name, _type}) -> name end)
+    ) do
+      raise TypeError, "wrong field names in struct literal"
+    end
+
+    fields = Enum.map(fields, fn({field_name, field_value}) ->
+      field_value = typecheck(ctx, field_value)
+      field_value_type = Millc.AST.meta(field_value)[:type]
+      {_, required_value_type} = Enum.find(required_fields, fn({name, _}) -> name === field_name end)
+      unless subtype?(ctx[:decl_types], field_value_type, required_value_type) do
+        raise TypeError, "expected '#{format(required_value_type)}' but got '#{format(field_value_type)}'"
+      end
+      {field_name, field_value}
+    end)
+
+    {:struct_literal_expr, type_expr, fields, Dict.put(meta, :type, type)}
   end
 
   defp register_decl_types(ctx, module_name, {:module, decls, _meta}) do
@@ -283,8 +316,11 @@ defmodule Millc.Type do
     ctx
   end
 
-  defp register_member_types(ctx, _module_name, {:union_decl, _, _, _meta}) do
-    ctx
+  defp register_member_types(ctx, module_name, {:union_decl, name, constructors, _meta}) do
+    type = %NamedType{name: {module_name, name}}
+    List.foldl(constructors, ctx, fn({constructor_name, []}, ctx) ->
+      put_in(ctx, [:member_types, {module_name, constructor_name}], type)
+    end)
   end
 
   defp register_member_types(ctx, _module_name, {:alias_decl, _, _, _meta}) do
