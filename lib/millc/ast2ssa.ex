@@ -79,7 +79,16 @@ defmodule Millc.AST2SSA do
     CFGBuilder.instr(builder, instr)
   end
 
-  defp codegen(builder, {:string_literal_expr, value, meta}) do
+  defp codegen(builder, {:string_literal_expr, value, _meta}) do
     CFGBuilder.instr(builder, {:ldstr, value})
+  end
+
+  defp codegen(builder, {:struct_literal_expr, type_expr, fields, _meta}) do
+    type = Millc.Type.type_expr_to_type(type_expr)
+    field_ids = Enum.map(fields, fn({name, value}) ->
+      field_id = codegen(builder, value)
+      {name, field_id}
+    end)
+    CFGBuilder.instr(builder, {:new, type, field_ids})
   end
 end

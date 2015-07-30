@@ -35,6 +35,7 @@ defmodule Millc.Opt.CIE do
           {:ldarg, _index} -> yes.()
           {:ldgbl, _module_name, _name} -> yes.()
           {:ldstr, _value} -> yes.()
+          {:new, _type, _fields} -> yes.()
 
           _ -> {block ++ [{instr_id, instr}], cache, to_replace}
         end

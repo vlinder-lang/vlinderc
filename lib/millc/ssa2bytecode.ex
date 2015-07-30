@@ -88,8 +88,13 @@ defmodule Millc.SSA2Bytecode do
         Builder.append(builder, %{opcode: "ldstr", value: value})
         Builder.store(builder, instr_id)
 
-      {:new, type} ->
-        Builder.append(builder, %{opcode: "new", type: Millc.Type.descriptor(type)})
+      {:new, type, fields} ->
+        type_descriptor = Millc.Type.descriptor(type)
+        Builder.append(builder, %{opcode: "new", type: type_descriptor})
+        Enum.each(fields, fn({name, value}) ->
+          Builder.load(builder, value)
+          Builder.append(builder, %{opcode: "stfld", type: type_descriptor, field: name})
+        end)
         Builder.store(builder, instr_id)
 
       {:ret, value} ->
