@@ -3,7 +3,7 @@ defmodule Millc.Assembly do
   `Millc.Assembly` assembles Mill module files.
   """
 
-  def assemble(module_name, module = {:module, decls, _meta}) do
+  def assemble(module_name, module = {:module, _decls, _meta}) do
     result = %{
       name: Enum.join(module_name, "."),
       imports: imports(module),
@@ -26,12 +26,42 @@ defmodule Millc.Assembly do
     end)
   end
 
-  defp unions(_module) do
-    []
+  defp unions({:module, decls, _meta}) do
+    Enum.flat_map(decls, fn(decl) ->
+      case decl do
+        {:union_decl, name, constructors, _meta} ->
+          union = %{
+            name: name,
+            constructors: Enum.map(constructors, fn({constructor_name, []}) ->
+              %{name: constructor_name, parameters: []}
+            end),
+          }
+          [union]
+        _ ->
+          []
+      end
+    end)
   end
 
-  defp structs(_module) do
-    []
+  defp structs({:module, decls, _meta}) do
+    Enum.flat_map(decls, fn(decl) ->
+      case decl do
+        {:struct_decl, name, fields, _meta} ->
+          struct = %{
+            name: name,
+            fields: Enum.map(fields, fn({field_name, field_type_expr}) ->
+              field_type = Millc.Type.type_expr_to_type(field_type_expr)
+              %{
+                name: field_name,
+                type: Millc.Type.descriptor(field_type),
+              }
+            end),
+          }
+          [struct]
+        _ ->
+          []
+      end
+    end)
   end
 
   defp aliases({:module, decls, _meta}) do
@@ -49,7 +79,7 @@ defmodule Millc.Assembly do
   defp subs({:module, decls, _meta}) do
     Enum.flat_map(decls, fn(decl) ->
       case decl do
-        {:sub_decl, name, params, return_type_expr, body, meta} ->
+        {:sub_decl, name, params, return_type_expr, _body, _meta} ->
           parameters = Enum.map(params, fn({param_name, param_type_expr}) ->
             param_type = Millc.Type.type_expr_to_type(param_type_expr)
             %{name: param_name, type: Millc.Type.descriptor(param_type)}
