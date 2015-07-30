@@ -6,6 +6,9 @@ defmodule Millc.ParseTest do
       import mill.log
 
       sub main(console: log.Logger): () {
+        mk T{}
+        mk U{x: "a"}
+        mk V{x: "a", y: "b"}
         log.info(console, "Hello, world!")
       }
     """
@@ -21,6 +24,24 @@ defmodule Millc.ParseTest do
           {:tuple_type_expr, [], %{}},
           {:block_expr,
             [
+              {:struct_literal_expr,
+                {:name_type_expr, {:unqualified_name, "T"}, %{}},
+                [],
+                %{},
+              },
+              {:struct_literal_expr,
+                {:name_type_expr, {:unqualified_name, "U"}, %{}},
+                [{"x", {:string_literal_expr, "a", %{}}}],
+                %{},
+              },
+              {:struct_literal_expr,
+                {:name_type_expr, {:unqualified_name, "V"}, %{}},
+                [
+                  {"x", {:string_literal_expr, "a", %{}}},
+                  {"y", {:string_literal_expr, "b", %{}}},
+                ],
+                %{},
+              },
               {:call_expr,
                 {:name_expr, {:qualified_name, "log", "info"}, %{}},
                 [

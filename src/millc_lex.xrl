@@ -15,13 +15,14 @@ RPAREN              = \)
 ALIAS               = alias
 FOREIGN             = foreign
 IMPORT              = import
+MK                  = mk
 STRUCT              = struct
 SUB                 = sub
 UNION               = union
 
 IDENTIFIER          = [a-zA-Z_][a-zA-Z_0-9]*
 
-STRING_LITERAL      = ".*?"
+STRING_LITERAL      = "[^"]*"
 
 Rules.
 
@@ -38,6 +39,7 @@ Rules.
 {ALIAS}             : {token, {alias, TokenLine}}.
 {FOREIGN}           : {token, {foreign, TokenLine}}.
 {IMPORT}            : {token, {import, TokenLine}}.
+{MK}                : {token, {mk, TokenLine}}.
 {STRUCT}            : {token, {struct, TokenLine}}.
 {SUB}               : {token, {sub, TokenLine}}.
 {UNION}             : {token, {union, TokenLine}}.

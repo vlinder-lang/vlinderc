@@ -22,6 +22,9 @@ Nonterminals
     primary_expr
     string_literal_expr
     struct_decl
+    struct_literal_expr
+    struct_literal_field
+    struct_literal_fields0
     sub_decl
     type_expr
     type_exprs_comma0
@@ -41,6 +44,7 @@ Terminals
 
     alias
     import
+    mk
     struct
     sub
     union
@@ -123,12 +127,23 @@ call_expr -> primary_expr : '$1'.
 
 primary_expr -> name_expr : '$1'.
 primary_expr -> string_literal_expr : '$1'.
+primary_expr -> struct_literal_expr : '$1'.
 primary_expr -> block_expr : '$1'.
 
 name_expr -> name : {name_expr, '$1', #{}}.
 
 string_literal_expr ->
     string_literal : {string_literal_expr, token_value('$1'), #{}}.
+
+struct_literal_expr ->
+    mk type_expr lbrace struct_literal_fields0 rbrace
+    : {struct_literal_expr, '$2', '$4', #{}}.
+
+struct_literal_fields0 -> '$empty' : [].
+struct_literal_fields0 -> struct_literal_field : ['$1'].
+struct_literal_fields0 -> struct_literal_field comma struct_literal_fields0 : ['$1' | '$3'].
+
+struct_literal_field -> identifier colon expr : {token_value('$1'), '$3'}.
 
 block_expr -> lbrace exprs0 rbrace : {block_expr, '$2', #{}}.
 
