@@ -53,7 +53,7 @@ defmodule Millc.AST2SSA do
 
   defp codegen(builder, {:block_expr, exprs, _meta}) do
     if exprs === [] do
-      CFGBuilder.instr(builder, {:new, %Millc.Type.TupleType{:element_types => []}})
+      CFGBuilder.instr(builder, {:new, %Millc.Type.TupleType{:element_types => []}, []})
     else
       exprs
       |> :lists.droplast()
