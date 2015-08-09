@@ -133,6 +133,31 @@ class typeSpec extends FlatSpec {
     assert(call.`type` equal StringType)
   }
 
+  it should "fail when calling generic subroutines with wrong argument types" in {
+    val forallParameter = ForallParameter("T")
+    implicit val context = Context(
+      Map(),
+      Map(
+        (ModuleName("mill", "text"), "cat") -> ForallType(
+          Vector(forallParameter),
+          SubType(
+            Vector(
+              ForallVariableType(forallParameter),
+              ForallVariableType(forallParameter)
+            ),
+            ForallVariableType(forallParameter)
+          )
+        )
+      )
+    )
+    val callee = NameExpr(QualifiedName("text", "cat"))
+    callee.symbol = MemberValueSymbol(ModuleName("mill", "text"), "cat")
+    val call = CallExpr(callee, Vector(StringLiteralExpr("a"), BlockExpr()))
+    intercept[TypeError] {
+      analyze(call)
+    }
+  }
+
   "unify" should "succeed for equal types" in {
     implicit val context = Context(Map(), Map())
     unify(StringType, StringType)

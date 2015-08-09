@@ -81,7 +81,7 @@ sealed abstract class Type {
   /**
    * Formats the type for error messages and other information.
    */
-  def format: String = this match {
+  def format(implicit context: Context): String = prune match {
     case VariableType(id) =>
       s"__v$id"
     case StringType =>

@@ -8,10 +8,10 @@ package object `type` {
   case class TypeError(reason: String) extends Exception(reason)
 
   object TypeError {
-    def couldNotUnify(a: Type, b: Type): TypeError =
+    def couldNotUnify(a: Type, b: Type)(implicit context: Context): TypeError =
       TypeError(s"could not unify '${a.format}' and '${b.format}'")
 
-    def nonStruct(t: Type): TypeError =
+    def nonStruct(t: Type)(implicit context: Context): TypeError =
       TypeError(s"expected a struct type but got '${t.format}'")
 
     def badStructFieldNames(expected: Set[String], actual: Set[String]): TypeError =
