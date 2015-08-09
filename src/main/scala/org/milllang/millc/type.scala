@@ -12,15 +12,27 @@ sealed abstract class Type {
     resolve == other.resolve
 
   def resolve(implicit context: Context): Type = this match {
+    case t @ VariableType(_) =>
+      t.instance match {
+        case Some(u) => u.resolve
+        case None => t
+      }
+    case t @ StringType =>
+      t
+    case TupleType(elementTypes @ _*) =>
+      TupleType(elementTypes map (_.resolve): _*)
+    case SubType(parameterTypes, returnType) =>
+      SubType(parameterTypes map (_.resolve), returnType.resolve)
     case t @ NamedType(name) =>
       context.typeDecls(name) match {
         case AliasTypeDecl(_, underlyingType) => underlyingType.resolve
         case _ => t
       }
-    case t => t
   }
 
   def descriptor: String = this match {
+    case VariableType(id) =>
+      s"V$id"
     case StringType =>
       "S"
     case TupleType(elementTypes @ _*) =>
@@ -32,6 +44,8 @@ sealed abstract class Type {
   }
 
   def format: String = this match {
+    case VariableType(id) =>
+      s"__v$id"
     case StringType =>
       "mill.text.String"
     case TupleType(elementTypes @ _*) =>
@@ -43,6 +57,16 @@ sealed abstract class Type {
   }
 }
 case object StringType extends Type
+case class VariableType(id: Int) extends Type {
+  var instance: Option[Type] = None
+}
+object VariableType {
+  private var lastID = 0
+  def apply(): VariableType = synchronized {
+    lastID += 1
+    VariableType(lastID)
+  }
+}
 case class TupleType(elementTypes: Type*) extends Type
 case class SubType(parameterTypes: Vector[Type], returnType: Type) extends Type
 case class NamedType(name: (ModuleName, String)) extends Type
@@ -104,15 +128,43 @@ object Type {
     context.copy(globalTypes = context.globalTypes ++ globalTypes)
   }
 
-  def unify(a: Type, b: Type)(implicit context: Context): Unit = (a, b) match {
-    case (a, b) if a equal b =>
-      ()
-    case _ =>
-      throw TypeError.couldNotUnify(a, b)
+  def analyze(expr: Expr)(implicit context: Context): Unit = expr match {
+    case NameExpr(name) =>
+      ???
+    case BlockExpr() =>
+      expr.`type` = TupleType()
+    case BlockExpr(body @ _*) =>
+      val init :+ last = body
+      for (expr <- init) {
+        analyze(expr)
+        unify(expr.`type`, TupleType())
+      }
+      analyze(last)
+      expr.`type` = last.`type`
+    case CallExpr(callee, arguments) =>
+      ???
+    case StringLiteralExpr(_) =>
+      expr.`type` = StringType
+    case StructLiteralExpr(struct, fields) =>
+      ???
   }
 
+  def unify(a: Type, b: Type)(implicit context: Context): Unit =
+    (a.resolve, b.resolve) match {
+      case (a: VariableType, b) if !(a equal b) =>
+        // TODO: throw recursive unification error if a occurs in b
+        a.instance = Some(b)
+      case (a, b: VariableType) =>
+        unify(b, a)
+      case (a, b) if a equal b =>
+        ()
+      case _ =>
+        throw TypeError.couldNotUnify(a, b)
+    }
+
   def typeExprToType(typeExpr: TypeExpr): Type = typeExpr match {
-    case NameTypeExpr(name) => ???
+    case NameTypeExpr(name) =>
+      ???
     case TupleTypeExpr(elementTypeExprs @ _*) =>
       TupleType(elementTypeExprs map typeExprToType: _*)
     case SubTypeExpr(parameterTypeExprs, returnTypeExpr) =>

@@ -22,7 +22,7 @@ case class NameExpr(name: Name) extends Expr {
 case class BlockExpr(body: Expr*) extends Expr
 case class CallExpr(callee: Expr, arguments: Vector[Expr]) extends Expr
 case class StringLiteralExpr(value: String) extends Expr
-case class StructLiteralExpr(struct: TypeExpr, fields: Vector[(String, Expr)])
+case class StructLiteralExpr(struct: TypeExpr, fields: Vector[(String, Expr)]) extends Expr
 
 sealed abstract class TypeExpr
 case class NameTypeExpr(name: Name) extends TypeExpr {

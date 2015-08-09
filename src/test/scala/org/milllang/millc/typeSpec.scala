@@ -42,6 +42,13 @@ class typeSpec extends FlatSpec {
     Type.unify(StringType, StringType)
   }
 
+  it should "unify concrete types with variable types" in {
+    implicit val context = Context(Map(), Map())
+    val variableType = VariableType()
+    Type.unify(variableType, StringType)
+    assert(variableType equal StringType)
+  }
+
   it should "fail for different types" in {
     implicit val context = Context(Map(), Map())
     intercept[TypeError] {
