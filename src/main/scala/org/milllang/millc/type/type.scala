@@ -93,7 +93,7 @@ sealed abstract class Type {
     case NamedType(name) =>
       s"${name._1.segments.mkString(".")}.${name._2}"
     case ForallType(parameters, body) =>
-      s"[${parameters.map(_.name).mkString(", ")}]${body.format}"
+      s"[${parameters.map(_.name + ": *").mkString(", ")}]${body.format}"
     case ForallVariableType(parameter) =>
       parameter.name
   }
