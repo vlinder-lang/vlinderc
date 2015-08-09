@@ -26,6 +26,10 @@ sealed abstract class Type {
       SubType(parameterTypes map (_.prune), returnType.prune)
     case t @ NamedType(_) =>
       t
+    case ForallType(parameters, body) =>
+      ForallType(parameters, body.prune)
+    case t @ ForallVariableType(_) =>
+      t
   }
 
   /**
@@ -48,7 +52,10 @@ sealed abstract class Type {
         case AliasTypeDecl(_, underlyingType) => underlyingType.resolve
         case _ => t
       }
-    case t => t
+    case ForallType(parameters, body) =>
+      ForallType(parameters, body.resolve)
+    case t @ ForallVariableType(_) =>
+      t
   }
 
   /**
@@ -65,6 +72,10 @@ sealed abstract class Type {
       s"F${parameterTypes.map(_.descriptor).mkString("")}${returnType.descriptor};"
     case NamedType(name) =>
       s"N${name._1.segments.mkString(".")}.${name._2};"
+    case ForallType(parameters, body) =>
+      s"[${parameters.map(_.name).mkString(";")}]${body.descriptor};"
+    case ForallVariableType(parameter) =>
+      s"A${parameter.name};"
   }
 
   /**
@@ -81,6 +92,10 @@ sealed abstract class Type {
       s"(${parameterTypes.map(_.format).mkString(", ")}) => ${returnType.format}"
     case NamedType(name) =>
       s"${name._1.segments.mkString(".")}.${name._2}"
+    case ForallType(parameters, body) =>
+      s"[${parameters.map(_.name).mkString(", ")}]${body.format}"
+    case ForallVariableType(parameter) =>
+      parameter.name
   }
 }
 case object StringType extends Type
@@ -97,6 +112,17 @@ object VariableType {
 case class TupleType(elementTypes: Type*) extends Type
 case class SubType(parameterTypes: Vector[Type], returnType: Type) extends Type
 case class NamedType(name: (ModuleName, String)) extends Type
+case class ForallType(parameters: Vector[ForallParameter], in: Type) extends Type
+case class ForallVariableType(parameter: ForallParameter) extends Type
+
+case class ForallParameter(name: String, id: Int)
+object ForallParameter {
+  private var lastID = 0
+  def apply(name: String): ForallParameter = synchronized {
+    lastID += 1
+    ForallParameter(name, lastID)
+  }
+}
 
 sealed abstract class TypeDecl
 case class StructTypeDecl(name: String, fields: Vector[(String, Type)]) extends TypeDecl

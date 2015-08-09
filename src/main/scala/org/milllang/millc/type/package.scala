@@ -142,11 +142,6 @@ package object `type` {
     (a.prune, b.prune) match {
       case (a, b) if a equal b =>
         ()
-      case (a: VariableType, b) =>
-        // TODO: throw recursive unification error if a occurs in b
-        a.instance = Some(b)
-      case (a, b: VariableType) =>
-        unify(b, a)
       case (a @ TupleType(aElementTypes @ _*), b @ TupleType(bElementTypes @ _*)) =>
         if (aElementTypes.size != bElementTypes.size) {
           throw TypeError.couldNotUnify(a, b)
@@ -162,9 +157,46 @@ package object `type` {
           unify(a, b)
         }
         unify(aReturnType, bReturnType)
+      case (ForallType(parameters, aBody), b) =>
+        val skolemized = skolemize(parameters.toSet, aBody)
+        unify(skolemized, b)
+      case (a, b @ ForallType(_, _)) =>
+        unify(b, a)
+      case (a: VariableType, b) =>
+        // TODO: throw recursive unification error if a occurs in b
+        a.instance = Some(b)
+      case (a, b: VariableType) =>
+        unify(b, a)
       case _ =>
         throw TypeError.couldNotUnify(a, b)
     }
+
+  /**
+   * Replaces forall variable types by variable types.
+   */
+  def skolemize(parameters: Set[ForallParameter], `type`: Type): Type = {
+    var replaced = Map[ForallParameter, VariableType]()
+    def go(`type`: Type): Type = `type` match {
+      case t @ StringType =>
+        t
+      case TupleType(elementTypes @ _*) =>
+        TupleType(elementTypes map go: _*)
+      case SubType(parameterTypes, returnType) =>
+        SubType(parameterTypes map go, go(returnType))
+      case t @ NamedType(_) =>
+        t
+      case ForallType(forallParameters, in) =>
+        ForallType(forallParameters, go(in))
+      case ForallVariableType(parameter) if parameters(parameter) =>
+        if (!(replaced contains parameter)) {
+          replaced += (parameter -> VariableType())
+        }
+        replaced(parameter)
+      case t @ ForallVariableType(_) =>
+        t
+    }
+    go(`type`)
+  }
 
   /**
    * Turns a type expression into a type.
