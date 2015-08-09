@@ -3,8 +3,8 @@ package org.milllang.millc
 case class Module(name: ModuleName, decls: Decl*)
 
 sealed abstract class Name
-case class QualifiedName(module: String, name: String)
-case class UnqualifiedName(name: String)
+case class QualifiedName(module: String, name: String) extends Name
+case class UnqualifiedName(name: String) extends Name
 
 sealed abstract class Decl
 case class ImportDecl(module: ModuleName) extends Decl

@@ -58,6 +58,20 @@ class typeSpec extends FlatSpec {
     }
   }
 
+  it should "succeed when calling subroutines with correct argument types" in {
+    implicit val context = Context(
+      Map(),
+      Map(
+        (ModuleName("mill", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
+      )
+    )
+    val callee = NameExpr(QualifiedName("debug", "trace"))
+    callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
+    val call = CallExpr(callee, Vector(StringLiteralExpr("Hello, world!")))
+    Type.analyze(call)
+    assert(call.`type` equal TupleType())
+  }
+
   it should "fail when calling non-subroutines" in {
     implicit val context = Context(Map(), Map())
     intercept[TypeError] {

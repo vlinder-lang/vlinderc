@@ -152,8 +152,11 @@ object Type {
   }
 
   def analyze(expr: Expr)(implicit context: Context): Unit = expr match {
-    case NameExpr(name) =>
-      ???
+    case e @ NameExpr(_) =>
+      e.symbol match {
+        case MemberValueSymbol(module, name) =>
+          e.`type` = context.globalTypes((module, name))
+      }
     case BlockExpr() =>
       expr.`type` = TupleType()
     case BlockExpr(body @ _*) =>
@@ -206,13 +209,28 @@ object Type {
 
   def unify(a: Type, b: Type)(implicit context: Context): Unit =
     (a.prune, b.prune) match {
-      case (a: VariableType, b) if !(a equal b) =>
+      case (a, b) if a equal b =>
+        ()
+      case (a: VariableType, b) =>
         // TODO: throw recursive unification error if a occurs in b
         a.instance = Some(b)
       case (a, b: VariableType) =>
         unify(b, a)
-      case (a, b) if a equal b =>
-        ()
+      case (a @ TupleType(aElementTypes @ _*), b @ TupleType(bElementTypes @ _*)) =>
+        if (aElementTypes.size != bElementTypes.size) {
+          throw TypeError.couldNotUnify(a, b)
+        }
+        for ((a, b) <- (aElementTypes zip bElementTypes)) {
+          unify(a, b)
+        }
+      case (a @ SubType(aParameterTypes, aReturnType), b @ SubType(bParameterTypes, bReturnType)) =>
+        if (aParameterTypes.size != bParameterTypes.size) {
+          throw TypeError.couldNotUnify(a, b)
+        }
+        for ((a, b) <- (aParameterTypes zip bParameterTypes)) {
+          unify(a, b)
+        }
+        unify(aReturnType, bReturnType)
       case _ =>
         throw TypeError.couldNotUnify(a, b)
     }
