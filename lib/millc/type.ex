@@ -4,8 +4,6 @@ defmodule Millc.Type do
   alias Millc.Name.ParamSymbol, as: ParamSymbol
   alias Millc.Name.BuiltinSymbol, as: BuiltinSymbol
 
-  defmodule TopType, do: defstruct []
-  defmodule BottomType, do: defstruct []
   defmodule StringType, do: defstruct []
 
   defmodule TupleType do
@@ -36,18 +34,6 @@ defmodule Millc.Type do
   defmodule AliasDeclType do
     @derive [Access]
     defstruct name: nil, aliases: nil
-  end
-
-  def subtype?(decl_types, a, b) do
-    case {a, b} do
-      {_, %TopType{}} -> true
-      {%BottomType{}, _} -> true
-      {a, b} -> same_type?(decl_types, a, b)
-    end
-  end
-
-  def supertype?(decl_types, a, b) do
-    subtype?(decl_types, b, a)
   end
 
   def same_type?(decl_types, a, b) do
@@ -150,7 +136,7 @@ defmodule Millc.Type do
     body = typecheck(ctx, body)
     body_type = Millc.AST.meta(body)[:type]
     return_type = type_expr_to_type(return_type_expr)
-    if !subtype?(ctx, body_type, return_type) do
+    if !same_type?(ctx, body_type, return_type) do
       raise TypeError, "expected '#{format(return_type)}' but got '#{format(body_type)}'"
     end
     {:sub_decl, name, params, return_type_expr, body, meta}
@@ -167,7 +153,7 @@ defmodule Millc.Type do
           expr = typecheck(ctx, expr)
           expr_type = Millc.AST.meta(expr)[:type]
           expected_type = %TupleType{element_types: []}
-          if !subtype?(ctx[:decl_types], expr_type, expected_type) do
+          if !same_type?(ctx[:decl_types], expr_type, expected_type) do
             raise TypeError, "all but the last expressions in a block must be of type '#{format(expected_type)}'"
           end
           expr
@@ -206,8 +192,6 @@ defmodule Millc.Type do
     return_type = case callee_type do
       %SubType{return_type: return_type} ->
         return_type
-      %BottomType{} ->
-        %BottomType{}
       t ->
         raise TypeError, "expected subroutine but got '#{format(t)}'"
     end
@@ -217,12 +201,10 @@ defmodule Millc.Type do
       |> Enum.with_index()
       |> Enum.map(fn({arg, i}) ->
         arg = typecheck(ctx, arg)
-        unless same_type?(ctx[:decl_types], callee_type, %BottomType{}) do
-          expected_type = Enum.at(callee_type[:param_types], i)
-          actual_type = Millc.AST.meta(arg)[:type]
-          if !subtype?(ctx[:decl_types], actual_type, expected_type) do
-            raise TypeError, "expected '#{format(expected_type)}' but got '#{format(actual_type)}'"
-          end
+        expected_type = Enum.at(callee_type[:param_types], i)
+        actual_type = Millc.AST.meta(arg)[:type]
+        if !same_type?(ctx[:decl_types], actual_type, expected_type) do
+          raise TypeError, "expected '#{format(expected_type)}' but got '#{format(actual_type)}'"
         end
         arg
       end)
@@ -260,7 +242,7 @@ defmodule Millc.Type do
       field_value = typecheck(ctx, field_value)
       field_value_type = Millc.AST.meta(field_value)[:type]
       {_, required_value_type} = Enum.find(required_fields, fn({name, _}) -> name === field_name end)
-      unless subtype?(ctx[:decl_types], field_value_type, required_value_type) do
+      unless same_type?(ctx[:decl_types], field_value_type, required_value_type) do
         raise TypeError, "expected '#{format(required_value_type)}' but got '#{format(field_value_type)}'"
       end
       {field_name, field_value}
@@ -346,8 +328,6 @@ defmodule Millc.Type do
         raise TypeError, "expected a type name but got a parameter name"
       %BuiltinSymbol{:name => name} ->
         case name do
-          "__Top" -> %TopType{}
-          "__Bottom" -> %BottomType{}
           "__String" -> %StringType{}
         end
     end
@@ -364,8 +344,6 @@ defmodule Millc.Type do
     %TupleType{:element_types => element_types}
   end
 
-  def format(%TopType{}), do: "mill.type.Top"
-  def format(%BottomType{}), do: "mill.type.Bottom"
   def format(%StringType{}), do: "mill.text.String"
 
   def format(%TupleType{element_types: element_types}) do
@@ -380,8 +358,6 @@ defmodule Millc.Type do
     "#{module_name |> Enum.join(".")}.#{name}"
   end
 
-  def descriptor(%TopType{}), do: "1"
-  def descriptor(%BottomType{}), do: "0"
   def descriptor(%StringType{}), do: "S"
 
   def descriptor(%TupleType{:element_types => element_types}) do
