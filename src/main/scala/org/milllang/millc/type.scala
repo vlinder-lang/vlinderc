@@ -31,11 +31,8 @@ case class SubType(parameterTypes: Vector[Type], returnType: Type) extends Type
 case class NamedType(name: (ModuleName, String)) extends Type
 
 sealed abstract class TypeDecl
-case class StructTypeDecl(name: String, fields: Vector[StructField]) extends TypeDecl
-case class UnionTypeDecl(name: String, fields: Vector[UnionConstructor]) extends TypeDecl
+case class StructTypeDecl(name: String, fields: Vector[(String, Type)]) extends TypeDecl
+case class UnionTypeDecl(name: String, fields: Vector[(String, Vector[Type])]) extends TypeDecl
 case class AliasTypeDecl(name: String, underlyingType: Type) extends TypeDecl
-
-case class StructField(name: String, `type`: Type)
-case class UnionConstructor(name: String, parameterTypes: Vector[Type])
 
 case class Context(typeDecls: Map[(ModuleName, String), TypeDecl])
