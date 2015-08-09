@@ -72,6 +72,36 @@ class typeSpec extends FlatSpec {
     assert(call.`type` equal TupleType())
   }
 
+  it should "fail when calling subroutines with wrong argument types" in {
+    implicit val context = Context(
+      Map(),
+      Map(
+        (ModuleName("mill", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
+      )
+    )
+    val callee = NameExpr(QualifiedName("debug", "trace"))
+    callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
+    val call = CallExpr(callee, Vector(BlockExpr()))
+    intercept[TypeError] {
+      Type.analyze(call)
+    }
+  }
+
+  it should "fail when calling subroutines with an invalid number of arguments" in {
+    implicit val context = Context(
+      Map(),
+      Map(
+        (ModuleName("mill", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
+      )
+    )
+    val callee = NameExpr(QualifiedName("debug", "trace"))
+    callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
+    val call = CallExpr(callee, Vector())
+    intercept[TypeError] {
+      Type.analyze(call)
+    }
+  }
+
   it should "fail when calling non-subroutines" in {
     implicit val context = Context(Map(), Map())
     intercept[TypeError] {
