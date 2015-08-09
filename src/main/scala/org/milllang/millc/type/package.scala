@@ -172,7 +172,7 @@ package object `type` {
     }
 
   /**
-   * Replaces forall variable types by variable types.
+   * Replaces forall variable types by variable types recursively.
    */
   def skolemize(parameters: Set[ForallParameter], `type`: Type): Type = {
     var replaced = Map[ForallParameter, VariableType]()
