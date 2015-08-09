@@ -9,7 +9,23 @@ object TypeError {
 
 sealed abstract class Type {
   def equal(other: Type)(implicit context: Context): Boolean =
-    resolve == other.resolve
+    prune == other.prune
+
+  def prune(implicit context: Context): Type = resolve match {
+    case t @ VariableType(_) =>
+      t.instance match {
+        case Some(u) => u.prune
+        case None => t
+      }
+    case t @ StringType =>
+      t
+    case TupleType(elementTypes @ _*) =>
+      TupleType(elementTypes map (_.prune): _*)
+    case SubType(parameterTypes, returnType) =>
+      SubType(parameterTypes map (_.prune), returnType.prune)
+    case t @ NamedType(_) =>
+      t
+  }
 
   def resolve(implicit context: Context): Type = this match {
     case t @ VariableType(_) =>
@@ -28,6 +44,7 @@ sealed abstract class Type {
         case AliasTypeDecl(_, underlyingType) => underlyingType.resolve
         case _ => t
       }
+    case t => t
   }
 
   def descriptor: String = this match {
@@ -142,7 +159,17 @@ object Type {
       analyze(last)
       expr.`type` = last.`type`
     case CallExpr(callee, arguments) =>
-      ???
+      val calleeType = {
+        analyze(callee)
+        callee.`type`
+      }
+      val argumentTypes = arguments map { argument =>
+        analyze(argument)
+        argument.`type`
+      }
+      val returnType = VariableType()
+      Type.unify(returnType, SubType(argumentTypes, returnType))
+      expr.`type` = returnType
     case StringLiteralExpr(_) =>
       expr.`type` = StringType
     case StructLiteralExpr(struct, fields) =>
@@ -150,7 +177,7 @@ object Type {
   }
 
   def unify(a: Type, b: Type)(implicit context: Context): Unit =
-    (a.resolve, b.resolve) match {
+    (a.prune, b.prune) match {
       case (a: VariableType, b) if !(a equal b) =>
         // TODO: throw recursive unification error if a occurs in b
         a.instance = Some(b)
