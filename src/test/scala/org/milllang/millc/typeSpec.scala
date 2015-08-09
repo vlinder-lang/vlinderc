@@ -37,6 +37,27 @@ class typeSpec extends FlatSpec {
     assert(NamedType((ModuleName("mill", "log"), "Record")).descriptor == "Nmill.log.Record;")
   }
 
+  "analyze" should "succeed for empty block exprs" in {
+    implicit val context = Context(Map(), Map())
+    val expr = BlockExpr()
+    Type.analyze(expr)
+    assert(expr.`type` equal TupleType())
+  }
+
+  it should "succeed when all but the last expr in a block exprs are not of type ()" in {
+    implicit val context = Context(Map(), Map())
+    val expr = BlockExpr(BlockExpr(), BlockExpr(), StringLiteralExpr("ok"))
+    Type.analyze(expr)
+    assert(expr.`type` equal StringType)
+  }
+
+  it should "fail when any but the last expr in a block exprs is not of type ()" in {
+    implicit val context = Context(Map(), Map())
+    intercept[TypeError] {
+      Type.analyze(BlockExpr(StringLiteralExpr("bad"), StringLiteralExpr("ok")))
+    }
+  }
+
   "unify" should "succeed for equal types" in {
     implicit val context = Context(Map(), Map())
     Type.unify(StringType, StringType)
