@@ -1,4 +1,7 @@
-package org.milllang.millc
+package org.milllang.millc.ast
+
+import org.milllang.millc.ModuleName
+import org.milllang.millc.name.Symbol
 
 case class Module(name: ModuleName, decls: Decl*)
 
@@ -14,7 +17,7 @@ case class AliasDecl(name: String, underlyingType: TypeExpr) extends Decl
 case class SubDecl(name: String, valueParameters: Vector[(String, TypeExpr)], returnType: TypeExpr, body: BlockExpr) extends Decl
 
 sealed abstract class Expr {
-  var `type`: Type = null
+  var `type`: org.milllang.millc.`type`.Type = null
 }
 case class NameExpr(name: Name) extends Expr {
   var symbol: Symbol = null

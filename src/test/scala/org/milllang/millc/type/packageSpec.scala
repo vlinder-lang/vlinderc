@@ -1,5 +1,8 @@
-package org.milllang.millc
+package org.milllang.millc.`type`
 
+import org.milllang.millc.ast._
+import org.milllang.millc.ModuleName
+import org.milllang.millc.name.MemberValueSymbol
 import org.scalatest._
 
 class typeSpec extends FlatSpec {
@@ -40,21 +43,21 @@ class typeSpec extends FlatSpec {
   "analyze" should "succeed for empty block exprs" in {
     implicit val context = Context(Map(), Map())
     val expr = BlockExpr()
-    Type.analyze(expr)
+    analyze(expr)
     assert(expr.`type` equal TupleType())
   }
 
   it should "succeed when all but the last expr in a block exprs are not of type ()" in {
     implicit val context = Context(Map(), Map())
     val expr = BlockExpr(BlockExpr(), BlockExpr(), StringLiteralExpr("ok"))
-    Type.analyze(expr)
+    analyze(expr)
     assert(expr.`type` equal StringType)
   }
 
   it should "fail when any but the last expr in a block exprs is not of type ()" in {
     implicit val context = Context(Map(), Map())
     intercept[TypeError] {
-      Type.analyze(BlockExpr(StringLiteralExpr("bad"), StringLiteralExpr("ok")))
+      analyze(BlockExpr(StringLiteralExpr("bad"), StringLiteralExpr("ok")))
     }
   }
 
@@ -68,7 +71,7 @@ class typeSpec extends FlatSpec {
     val callee = NameExpr(QualifiedName("debug", "trace"))
     callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
     val call = CallExpr(callee, Vector(StringLiteralExpr("Hello, world!")))
-    Type.analyze(call)
+    analyze(call)
     assert(call.`type` equal TupleType())
   }
 
@@ -83,7 +86,7 @@ class typeSpec extends FlatSpec {
     callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
     val call = CallExpr(callee, Vector(BlockExpr()))
     intercept[TypeError] {
-      Type.analyze(call)
+      analyze(call)
     }
   }
 
@@ -98,38 +101,38 @@ class typeSpec extends FlatSpec {
     callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
     val call = CallExpr(callee, Vector())
     intercept[TypeError] {
-      Type.analyze(call)
+      analyze(call)
     }
   }
 
   it should "fail when calling non-subroutines" in {
     implicit val context = Context(Map(), Map())
     intercept[TypeError] {
-      Type.analyze(CallExpr(BlockExpr(), Vector(StringLiteralExpr("ok"))))
+      analyze(CallExpr(BlockExpr(), Vector(StringLiteralExpr("ok"))))
     }
   }
 
   "unify" should "succeed for equal types" in {
     implicit val context = Context(Map(), Map())
-    Type.unify(StringType, StringType)
+    unify(StringType, StringType)
   }
 
   it should "unify concrete types with variable types" in {
     implicit val context = Context(Map(), Map())
     val variableType = VariableType()
-    Type.unify(variableType, StringType)
+    unify(variableType, StringType)
     assert(variableType equal StringType)
   }
 
   it should "fail for different types" in {
     implicit val context = Context(Map(), Map())
     intercept[TypeError] {
-      Type.unify(StringType, TupleType())
+      unify(StringType, TupleType())
     }
     intercept[TypeError] {
       val variableType = VariableType()
-      Type.unify(variableType, StringType)
-      Type.unify(variableType, TupleType())
+      unify(variableType, StringType)
+      unify(variableType, TupleType())
     }
   }
 }

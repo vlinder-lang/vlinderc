@@ -1,110 +1,31 @@
 package org.milllang.millc
 
-case class TypeError(reason: String) extends Exception(reason)
+package object `type` {
+  import org.milllang.millc.ast._
+  import org.milllang.millc.ModuleName
+  import org.milllang.millc.name.MemberValueSymbol
 
-object TypeError {
-  def couldNotUnify(a: Type, b: Type): TypeError =
-    TypeError(s"could not unify '${a.format}' and '${b.format}'")
+  case class TypeError(reason: String) extends Exception(reason)
 
-  def nonStruct(t: Type): TypeError =
-    TypeError(s"expected a struct type but got '${t.format}'")
+  object TypeError {
+    def couldNotUnify(a: Type, b: Type): TypeError =
+      TypeError(s"could not unify '${a.format}' and '${b.format}'")
 
-  def badStructFieldNames(expected: Set[String], actual: Set[String]): TypeError =
-    TypeError(s"expected fields {${expected.mkString(", ")}} but got {${actual.mkString(", ")}}")
-}
+    def nonStruct(t: Type): TypeError =
+      TypeError(s"expected a struct type but got '${t.format}'")
 
-sealed abstract class Type {
-  def equal(other: Type)(implicit context: Context): Boolean =
-    prune == other.prune
-
-  def prune(implicit context: Context): Type = resolve match {
-    case t @ VariableType(_) =>
-      t.instance match {
-        case Some(u) => u.prune
-        case None => t
-      }
-    case t @ StringType =>
-      t
-    case TupleType(elementTypes @ _*) =>
-      TupleType(elementTypes map (_.prune): _*)
-    case SubType(parameterTypes, returnType) =>
-      SubType(parameterTypes map (_.prune), returnType.prune)
-    case t @ NamedType(_) =>
-      t
+    def badStructFieldNames(expected: Set[String], actual: Set[String]): TypeError =
+      TypeError(s"expected fields {${expected.mkString(", ")}} but got {${actual.mkString(", ")}}")
   }
 
-  def resolve(implicit context: Context): Type = this match {
-    case t @ VariableType(_) =>
-      t.instance match {
-        case Some(u) => u.resolve
-        case None => t
-      }
-    case t @ StringType =>
-      t
-    case TupleType(elementTypes @ _*) =>
-      TupleType(elementTypes map (_.resolve): _*)
-    case SubType(parameterTypes, returnType) =>
-      SubType(parameterTypes map (_.resolve), returnType.resolve)
-    case t @ NamedType(name) =>
-      context.typeDecls(name) match {
-        case AliasTypeDecl(_, underlyingType) => underlyingType.resolve
-        case _ => t
-      }
-    case t => t
-  }
+  case class Context(
+    typeDecls: Map[(ModuleName, String), TypeDecl],
+    globalTypes: Map[(ModuleName, String), Type]
+  )
 
-  def descriptor: String = this match {
-    case VariableType(id) =>
-      s"V$id"
-    case StringType =>
-      "S"
-    case TupleType(elementTypes @ _*) =>
-      s"T${elementTypes.map(_.descriptor).mkString("")};"
-    case SubType(parameterTypes, returnType) =>
-      s"F${parameterTypes.map(_.descriptor).mkString("")}${returnType.descriptor};"
-    case NamedType(name) =>
-      s"N${name._1.segments.mkString(".")}.${name._2};"
-  }
-
-  def format: String = this match {
-    case VariableType(id) =>
-      s"__v$id"
-    case StringType =>
-      "mill.text.String"
-    case TupleType(elementTypes @ _*) =>
-      s"(${elementTypes.map(_.format).mkString(", ")})"
-    case SubType(parameterTypes, returnType) =>
-      s"(${parameterTypes.map(_.format).mkString(", ")}) => ${returnType.format}"
-    case NamedType(name) =>
-      s"${name._1.segments.mkString(".")}.${name._2}"
-  }
-}
-case object StringType extends Type
-case class VariableType(id: Int) extends Type {
-  var instance: Option[Type] = None
-}
-object VariableType {
-  private var lastID = 0
-  def apply(): VariableType = synchronized {
-    lastID += 1
-    VariableType(lastID)
-  }
-}
-case class TupleType(elementTypes: Type*) extends Type
-case class SubType(parameterTypes: Vector[Type], returnType: Type) extends Type
-case class NamedType(name: (ModuleName, String)) extends Type
-
-sealed abstract class TypeDecl
-case class StructTypeDecl(name: String, fields: Vector[(String, Type)]) extends TypeDecl
-case class UnionTypeDecl(name: String, constructors: Vector[(String, Vector[Type])]) extends TypeDecl
-case class AliasTypeDecl(name: String, underlyingType: Type) extends TypeDecl
-
-case class Context(
-  typeDecls: Map[(ModuleName, String), TypeDecl],
-  globalTypes: Map[(ModuleName, String), Type]
-)
-
-object Type {
+  /**
+   * Adds types to all expressions.
+   */
   def analyze(modules: Vector[Module]): Unit = {
     implicit var context = Context(Map(), Map())
     context = populateTypeDecls(modules)
@@ -151,6 +72,9 @@ object Type {
     context.copy(globalTypes = context.globalTypes ++ globalTypes)
   }
 
+  /**
+   * Adds type to an expression and all its subexpressions.
+   */
   def analyze(expr: Expr)(implicit context: Context): Unit = expr match {
     case e @ NameExpr(_) =>
       e.symbol match {
@@ -207,6 +131,9 @@ object Type {
       expr.`type` = type_
   }
 
+  /**
+   * Unifies two types.
+   */
   def unify(a: Type, b: Type)(implicit context: Context): Unit =
     (a.prune, b.prune) match {
       case (a, b) if a equal b =>
@@ -235,6 +162,9 @@ object Type {
         throw TypeError.couldNotUnify(a, b)
     }
 
+  /**
+   * Turns a type expression into a type.
+   */
   def typeExprToType(typeExpr: TypeExpr): Type = typeExpr match {
     case NameTypeExpr(name) =>
       ???
