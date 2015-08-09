@@ -36,4 +36,16 @@ class typeSpec extends FlatSpec {
     assert(SubType(Vector(StringType, TupleType()), StringType).descriptor == "FST;S;")
     assert(NamedType((ModuleName("mill", "log"), "Record")).descriptor == "Nmill.log.Record;")
   }
+
+  "unify" should "succeed for equal types" in {
+    implicit val context = Context(Map(), Map())
+    Type.unify(StringType, StringType)
+  }
+
+  it should "fail for different types" in {
+    implicit val context = Context(Map(), Map())
+    intercept[TypeError] {
+      Type.unify(StringType, TupleType())
+    }
+  }
 }

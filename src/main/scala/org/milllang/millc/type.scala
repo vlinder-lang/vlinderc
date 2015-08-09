@@ -1,5 +1,12 @@
 package org.milllang.millc
 
+case class TypeError(reason: String) extends Exception(reason)
+
+object TypeError {
+  def couldNotUnify(a: Type, b: Type): TypeError =
+    TypeError(s"could not unify '${a.format}' and '${b.format}'")
+}
+
 sealed abstract class Type {
   def equal(other: Type)(implicit context: Context): Boolean =
     resolve == other.resolve
@@ -22,6 +29,17 @@ sealed abstract class Type {
       s"F${parameterTypes.map(_.descriptor).mkString("")}${returnType.descriptor};"
     case NamedType(name) =>
       s"N${name._1.segments.mkString(".")}.${name._2};"
+  }
+
+  def format: String = this match {
+    case StringType =>
+      "mill.text.String"
+    case TupleType(elementTypes @ _*) =>
+      s"(${elementTypes.map(_.format).mkString(", ")})"
+    case SubType(parameterTypes, returnType) =>
+      s"(${parameterTypes.map(_.format).mkString(", ")}) => ${returnType.format}"
+    case NamedType(name) =>
+      s"${name._1.segments.mkString(".")}.${name._2}"
   }
 }
 case object StringType extends Type
@@ -84,6 +102,13 @@ object Type {
       }
     } yield globalType
     context.copy(globalTypes = context.globalTypes ++ globalTypes)
+  }
+
+  def unify(a: Type, b: Type)(implicit context: Context): Unit = (a, b) match {
+    case (a, b) if a equal b =>
+      ()
+    case _ =>
+      throw TypeError.couldNotUnify(a, b)
   }
 
   def typeExprToType(typeExpr: TypeExpr): Type = typeExpr match {
