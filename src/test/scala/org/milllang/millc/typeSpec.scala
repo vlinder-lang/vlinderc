@@ -54,5 +54,10 @@ class typeSpec extends FlatSpec {
     intercept[TypeError] {
       Type.unify(StringType, TupleType())
     }
+    intercept[TypeError] {
+      val variableType = VariableType()
+      Type.unify(variableType, StringType)
+      Type.unify(variableType, TupleType())
+    }
   }
 }
