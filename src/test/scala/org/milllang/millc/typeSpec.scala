@@ -9,7 +9,8 @@ class typeSpec extends FlatSpec {
         (ModuleName("mill", "log"), "Record") -> StructTypeDecl("Record", Vector()),
         (ModuleName("mill", "log"), "Level") -> UnionTypeDecl("Level", Vector()),
         (ModuleName("mill", "log"), "Logger") -> AliasTypeDecl("Logger", TupleType())
-      )
+      ),
+      Map()
     )
 
     assert(StringType equal StringType)

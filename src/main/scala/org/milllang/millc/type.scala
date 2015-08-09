@@ -24,7 +24,6 @@ sealed abstract class Type {
       s"N${name._1.segments.mkString(".")}.${name._2};"
   }
 }
-
 case object StringType extends Type
 case class TupleType(elementTypes: Type*) extends Type
 case class SubType(parameterTypes: Vector[Type], returnType: Type) extends Type
@@ -32,7 +31,66 @@ case class NamedType(name: (ModuleName, String)) extends Type
 
 sealed abstract class TypeDecl
 case class StructTypeDecl(name: String, fields: Vector[(String, Type)]) extends TypeDecl
-case class UnionTypeDecl(name: String, fields: Vector[(String, Vector[Type])]) extends TypeDecl
+case class UnionTypeDecl(name: String, constructors: Vector[(String, Vector[Type])]) extends TypeDecl
 case class AliasTypeDecl(name: String, underlyingType: Type) extends TypeDecl
 
-case class Context(typeDecls: Map[(ModuleName, String), TypeDecl])
+case class Context(
+  typeDecls: Map[(ModuleName, String), TypeDecl],
+  globalTypes: Map[(ModuleName, String), Type]
+)
+
+object Type {
+  def analyze(modules: Vector[Module]): Unit = {
+    implicit var context = Context(Map(), Map())
+    context = populateTypeDecls(modules)
+    context = populateGlobalTypes(modules)
+  }
+
+  private def populateTypeDecls(modules: Vector[Module])(implicit context: Context): Context = {
+    val typeDecls = for {
+      module <- modules
+      decl <- module.decls
+      typeDecl <- decl match {
+        case StructDecl(name, astFields) =>
+          val structFields = astFields map { case (name, typeExpr) =>
+            (name, typeExprToType(typeExpr))
+          }
+          Vector((module.name, name) -> StructTypeDecl(name, structFields))
+        case UnionDecl(name, astConstructors) =>
+          val unionConstructors = astConstructors map { case (name, parameters) =>
+            (name, parameters map typeExprToType)
+          }
+          Vector((module.name, name) -> UnionTypeDecl(name, unionConstructors))
+        case AliasDecl(name, underlyingType) =>
+          Vector((module.name, name) -> AliasTypeDecl(name, typeExprToType(underlyingType)))
+        case _ =>
+          Vector()
+      }
+    } yield typeDecl
+    context.copy(typeDecls = context.typeDecls ++ typeDecls)
+  }
+
+  private def populateGlobalTypes(modules: Vector[Module])(implicit context: Context): Context = {
+    var globalTypes = for {
+      module <- modules
+      decl <- module.decls
+      globalType <- decl match {
+        case SubDecl(name, valueParameters, returnTypeExpr, _) =>
+          val parameterTypes = valueParameters map { case (_, typeExpr) => typeExprToType(typeExpr) }
+          val returnType = typeExprToType(returnTypeExpr)
+          Vector((module.name, name) -> SubType(parameterTypes, returnType))
+        case _ =>
+          Vector()
+      }
+    } yield globalType
+    context.copy(globalTypes = context.globalTypes ++ globalTypes)
+  }
+
+  def typeExprToType(typeExpr: TypeExpr): Type = typeExpr match {
+    case NameTypeExpr(name) => ???
+    case TupleTypeExpr(elementTypeExprs @ _*) =>
+      TupleType(elementTypeExprs map typeExprToType: _*)
+    case SubTypeExpr(parameterTypeExprs, returnTypeExpr) =>
+      SubType(parameterTypeExprs map typeExprToType, typeExprToType(returnTypeExpr))
+  }
+}

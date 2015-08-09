@@ -13,14 +13,20 @@ case class UnionDecl(name: String, constructors: Vector[(String, Vector[TypeExpr
 case class AliasDecl(name: String, underlyingType: TypeExpr) extends Decl
 case class SubDecl(name: String, valueParameters: Vector[(String, TypeExpr)], returnType: TypeExpr, body: BlockExpr) extends Decl
 
-sealed abstract class Expr
-case class NameExpr(name: Name) extends Expr
+sealed abstract class Expr {
+  var `type`: Type = null
+}
+case class NameExpr(name: Name) extends Expr {
+  var symbol: Symbol = null
+}
 case class BlockExpr(body: Expr*) extends Expr
 case class CallExpr(callee: Expr, arguments: Vector[Expr]) extends Expr
 case class StringLiteralExpr(value: String) extends Expr
 case class StructLiteralExpr(struct: TypeExpr, fields: Vector[(String, Expr)])
 
 sealed abstract class TypeExpr
-case class NameTypeExpr(name: Name) extends TypeExpr
+case class NameTypeExpr(name: Name) extends TypeExpr {
+  var symbol: Symbol = null
+}
 case class TupleTypeExpr(elementTypes: TypeExpr*) extends TypeExpr
 case class SubTypeExpr(parameterTypes: Vector[TypeExpr], returnType: TypeExpr) extends TypeExpr
