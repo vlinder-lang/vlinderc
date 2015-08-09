@@ -18,6 +18,10 @@ package object `type` {
       TypeError(s"expected fields {${expected.mkString(", ")}} but got {${actual.mkString(", ")}}")
   }
 
+  /**
+   * @param typeDecls contains type declarations
+   * @param globalTypes contains types of global subroutines
+   */
   case class Context(
     typeDecls: Map[(ModuleName, String), TypeDecl],
     globalTypes: Map[(ModuleName, String), Type]
