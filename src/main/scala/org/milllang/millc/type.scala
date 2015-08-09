@@ -174,7 +174,7 @@ object Type {
         argument.`type`
       }
       val returnType = VariableType()
-      Type.unify(returnType, SubType(argumentTypes, returnType))
+      Type.unify(calleeType, SubType(argumentTypes, returnType))
       expr.`type` = returnType
     case StringLiteralExpr(_) =>
       expr.`type` = StringType
