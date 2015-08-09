@@ -5,6 +5,12 @@ case class TypeError(reason: String) extends Exception(reason)
 object TypeError {
   def couldNotUnify(a: Type, b: Type): TypeError =
     TypeError(s"could not unify '${a.format}' and '${b.format}'")
+
+  def nonStruct(t: Type): TypeError =
+    TypeError(s"expected a struct type but got '${t.format}'")
+
+  def badStructFieldNames(expected: Set[String], actual: Set[String]): TypeError =
+    TypeError(s"expected fields {${expected.mkString(", ")}} but got {${actual.mkString(", ")}}")
 }
 
 sealed abstract class Type {
@@ -173,7 +179,29 @@ object Type {
     case StringLiteralExpr(_) =>
       expr.`type` = StringType
     case StructLiteralExpr(struct, fields) =>
-      ???
+      val type_ = typeExprToType(struct)
+      val decl = type_.resolve match {
+        case t @ NamedType(name) =>
+          context.typeDecls(name) match {
+            case d: StructTypeDecl => d
+            case _ => throw TypeError.nonStruct(t)
+          }
+        case t => throw TypeError.nonStruct(t)
+      }
+
+      val expectedFieldNames = decl.fields.map(_._1).toSet
+      val actualFieldNames = fields.map(_._1).toSet
+      if (expectedFieldNames != actualFieldNames) {
+        throw TypeError.badStructFieldNames(expectedFieldNames, actualFieldNames)
+      }
+
+      val correspondingFields = decl.fields.sortBy(_._1) zip fields.sortBy(_._1)
+      for (((_, fieldType), (_, value)) <- correspondingFields) {
+        analyze(value)
+        Type.unify(fieldType, value.`type`)
+      }
+
+      expr.`type` = type_
   }
 
   def unify(a: Type, b: Type)(implicit context: Context): Unit =
