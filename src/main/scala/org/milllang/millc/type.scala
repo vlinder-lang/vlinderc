@@ -174,7 +174,7 @@ object Type {
         argument.`type`
       }
       val returnType = VariableType()
-      Type.unify(calleeType, SubType(argumentTypes, returnType))
+      unify(calleeType, SubType(argumentTypes, returnType))
       expr.`type` = returnType
     case StringLiteralExpr(_) =>
       expr.`type` = StringType
@@ -198,7 +198,7 @@ object Type {
       val correspondingFields = decl.fields.sortBy(_._1) zip fields.sortBy(_._1)
       for (((_, fieldType), (_, value)) <- correspondingFields) {
         analyze(value)
-        Type.unify(fieldType, value.`type`)
+        unify(fieldType, value.`type`)
       }
 
       expr.`type` = type_

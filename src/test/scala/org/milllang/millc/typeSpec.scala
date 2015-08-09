@@ -58,6 +58,13 @@ class typeSpec extends FlatSpec {
     }
   }
 
+  it should "fail when calling non-subroutines" in {
+    implicit val context = Context(Map(), Map())
+    intercept[TypeError] {
+      Type.analyze(CallExpr(BlockExpr(), Vector(StringLiteralExpr("ok"))))
+    }
+  }
+
   "unify" should "succeed for equal types" in {
     implicit val context = Context(Map(), Map())
     Type.unify(StringType, StringType)
