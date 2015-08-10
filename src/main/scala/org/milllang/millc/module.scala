@@ -1,3 +1,3 @@
-package org.milllang.millc
+package org.vlinderlang.vlinderc
 
 case class ModuleName(segments: String*)

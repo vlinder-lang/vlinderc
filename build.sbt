@@ -1,4 +1,4 @@
-name := "millc"
+name := "vlinderc"
 
 version := "0.0.1"
 

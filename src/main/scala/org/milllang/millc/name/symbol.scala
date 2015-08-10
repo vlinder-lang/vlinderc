@@ -1,6 +1,6 @@
-package org.milllang.millc.name
+package org.vlinderlang.vlinderc.name
 
-import org.milllang.millc.ModuleName
+import org.vlinderlang.vlinderc.ModuleName
 
 sealed abstract class Symbol
 case class MemberValueSymbol(module: ModuleName, member: String) extends Symbol

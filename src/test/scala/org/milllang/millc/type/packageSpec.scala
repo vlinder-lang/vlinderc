@@ -1,17 +1,17 @@
-package org.milllang.millc.`type`
+package org.vlinderlang.vlinderc.`type`
 
-import org.milllang.millc.ast._
-import org.milllang.millc.ModuleName
-import org.milllang.millc.name.MemberValueSymbol
+import org.vlinderlang.vlinderc.ast._
+import org.vlinderlang.vlinderc.ModuleName
+import org.vlinderlang.vlinderc.name.MemberValueSymbol
 import org.scalatest._
 
 class typeSpec extends FlatSpec {
   "equal" should "compare two types for equality" in {
     implicit val context = Context(
       Map(
-        (ModuleName("mill", "log"), "Record") -> StructTypeDecl("Record", Vector()),
-        (ModuleName("mill", "log"), "Level") -> UnionTypeDecl("Level", Vector()),
-        (ModuleName("mill", "log"), "Logger") -> AliasTypeDecl("Logger", TupleType())
+        (ModuleName("vlinder", "log"), "Record") -> StructTypeDecl("Record", Vector()),
+        (ModuleName("vlinder", "log"), "Level") -> UnionTypeDecl("Level", Vector()),
+        (ModuleName("vlinder", "log"), "Logger") -> AliasTypeDecl("Logger", TupleType())
       ),
       Map()
     )
@@ -19,13 +19,13 @@ class typeSpec extends FlatSpec {
     assert(StringType equal StringType)
     assert(TupleType() equal TupleType())
     assert(!(StringType equal TupleType()))
-    assert(NamedType((ModuleName("mill", "log"), "Record")) equal
-           NamedType((ModuleName("mill", "log"), "Record")))
-    assert(NamedType((ModuleName("mill", "log"), "Logger")) equal
-           NamedType((ModuleName("mill", "log"), "Logger")))
-    assert(NamedType((ModuleName("mill", "log"), "Logger")) equal
+    assert(NamedType((ModuleName("vlinder", "log"), "Record")) equal
+           NamedType((ModuleName("vlinder", "log"), "Record")))
+    assert(NamedType((ModuleName("vlinder", "log"), "Logger")) equal
+           NamedType((ModuleName("vlinder", "log"), "Logger")))
+    assert(NamedType((ModuleName("vlinder", "log"), "Logger")) equal
            TupleType())
-    assert(!(NamedType((ModuleName("mill", "log"), "Logger")) equal
+    assert(!(NamedType((ModuleName("vlinder", "log"), "Logger")) equal
              StringType))
   }
 
@@ -37,7 +37,7 @@ class typeSpec extends FlatSpec {
     assert(SubType(Vector.empty, StringType).descriptor == "FS;")
     assert(SubType(Vector(StringType, StringType), StringType).descriptor == "FSSS;")
     assert(SubType(Vector(StringType, TupleType()), StringType).descriptor == "FST;S;")
-    assert(NamedType((ModuleName("mill", "log"), "Record")).descriptor == "Nmill.log.Record;")
+    assert(NamedType((ModuleName("vlinder", "log"), "Record")).descriptor == "Nvlinder.log.Record;")
   }
 
   "analyze" should "succeed for empty block exprs" in {
@@ -65,11 +65,11 @@ class typeSpec extends FlatSpec {
     implicit val context = Context(
       Map(),
       Map(
-        (ModuleName("mill", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
+        (ModuleName("vlinder", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
       )
     )
     val callee = NameExpr(QualifiedName("debug", "trace"))
-    callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
+    callee.symbol = MemberValueSymbol(ModuleName("vlinder", "debug"), "trace")
     val call = CallExpr(callee, Vector(StringLiteralExpr("Hello, world!")))
     analyze(call)
     assert(call.`type` equal TupleType())
@@ -79,11 +79,11 @@ class typeSpec extends FlatSpec {
     implicit val context = Context(
       Map(),
       Map(
-        (ModuleName("mill", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
+        (ModuleName("vlinder", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
       )
     )
     val callee = NameExpr(QualifiedName("debug", "trace"))
-    callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
+    callee.symbol = MemberValueSymbol(ModuleName("vlinder", "debug"), "trace")
     val call = CallExpr(callee, Vector(BlockExpr()))
     intercept[TypeError] {
       analyze(call)
@@ -94,11 +94,11 @@ class typeSpec extends FlatSpec {
     implicit val context = Context(
       Map(),
       Map(
-        (ModuleName("mill", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
+        (ModuleName("vlinder", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
       )
     )
     val callee = NameExpr(QualifiedName("debug", "trace"))
-    callee.symbol = MemberValueSymbol(ModuleName("mill", "debug"), "trace")
+    callee.symbol = MemberValueSymbol(ModuleName("vlinder", "debug"), "trace")
     val call = CallExpr(callee, Vector())
     intercept[TypeError] {
       analyze(call)
@@ -117,7 +117,7 @@ class typeSpec extends FlatSpec {
     implicit val context = Context(
       Map(),
       Map(
-        (ModuleName("mill", "func"), "id") -> ForallType(
+        (ModuleName("vlinder", "func"), "id") -> ForallType(
           Vector(forallParameter),
           SubType(
             Vector(ForallVariableType(forallParameter)),
@@ -127,7 +127,7 @@ class typeSpec extends FlatSpec {
       )
     )
     val callee = NameExpr(QualifiedName("func", "id"))
-    callee.symbol = MemberValueSymbol(ModuleName("mill", "func"), "id")
+    callee.symbol = MemberValueSymbol(ModuleName("vlinder", "func"), "id")
     val call = CallExpr(callee, Vector(StringLiteralExpr("ok")))
     analyze(call)
     assert(call.`type` equal StringType)
@@ -138,7 +138,7 @@ class typeSpec extends FlatSpec {
     implicit val context = Context(
       Map(),
       Map(
-        (ModuleName("mill", "text"), "cat") -> ForallType(
+        (ModuleName("vlinder", "text"), "cat") -> ForallType(
           Vector(forallParameter),
           SubType(
             Vector(
@@ -151,7 +151,7 @@ class typeSpec extends FlatSpec {
       )
     )
     val callee = NameExpr(QualifiedName("text", "cat"))
-    callee.symbol = MemberValueSymbol(ModuleName("mill", "text"), "cat")
+    callee.symbol = MemberValueSymbol(ModuleName("vlinder", "text"), "cat")
     val call = CallExpr(callee, Vector(StringLiteralExpr("a"), BlockExpr()))
     intercept[TypeError] {
       analyze(call)

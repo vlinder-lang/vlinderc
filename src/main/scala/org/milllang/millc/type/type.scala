@@ -1,6 +1,6 @@
-package org.milllang.millc.`type`
+package org.vlinderlang.vlinderc.`type`
 
-import org.milllang.millc.ModuleName
+import org.vlinderlang.vlinderc.ModuleName
 
 sealed abstract class Type {
   /**
@@ -85,7 +85,7 @@ sealed abstract class Type {
     case VariableType(id) =>
       s"__v$id"
     case StringType =>
-      "mill.text.String"
+      "vlinder.text.String"
     case TupleType(elementTypes @ _*) =>
       s"(${elementTypes.map(_.format).mkString(", ")})"
     case SubType(parameterTypes, returnType) =>

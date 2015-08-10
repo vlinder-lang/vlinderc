@@ -1,9 +1,9 @@
-package org.milllang.millc
+package org.vlinderlang.vlinderc
 
 package object `type` {
-  import org.milllang.millc.ast._
-  import org.milllang.millc.ModuleName
-  import org.milllang.millc.name.MemberValueSymbol
+  import org.vlinderlang.vlinderc.ast._
+  import org.vlinderlang.vlinderc.ModuleName
+  import org.vlinderlang.vlinderc.name.MemberValueSymbol
 
   case class TypeError(reason: String) extends Exception(reason)
 

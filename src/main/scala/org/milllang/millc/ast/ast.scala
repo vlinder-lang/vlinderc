@@ -1,7 +1,7 @@
-package org.milllang.millc.ast
+package org.vlinderlang.vlinderc.ast
 
-import org.milllang.millc.ModuleName
-import org.milllang.millc.name.Symbol
+import org.vlinderlang.vlinderc.ModuleName
+import org.vlinderlang.vlinderc.name.Symbol
 
 case class Module(name: ModuleName, decls: Decl*)
 
@@ -17,7 +17,7 @@ case class AliasDecl(name: String, underlyingType: TypeExpr) extends Decl
 case class SubDecl(name: String, valueParameters: Vector[(String, TypeExpr)], returnType: TypeExpr, body: BlockExpr) extends Decl
 
 sealed abstract class Expr {
-  var `type`: org.milllang.millc.`type`.Type = null
+  var `type`: org.vlinderlang.vlinderc.`type`.Type = null
 }
 case class NameExpr(name: Name) extends Expr {
   var symbol: Symbol = null
