@@ -3,9 +3,9 @@ package org.vlinderlang.vlinderc.`type`
 import org.vlinderlang.vlinderc.ast._
 import org.vlinderlang.vlinderc.ModuleName
 import org.vlinderlang.vlinderc.name.MemberValueSymbol
-import org.scalatest._
+import org.scalatest.FlatSpec
 
-class typeSpec extends FlatSpec {
+class packageSpec extends FlatSpec {
   "equal" should "compare two types for equality" in {
     implicit val context = Context(
       Map(
