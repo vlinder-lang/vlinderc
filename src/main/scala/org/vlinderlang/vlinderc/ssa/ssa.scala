@@ -6,7 +6,7 @@ import scala.collection.immutable.ListMap
 class BlockID
 class InstID
 
-case class CFG(blocks: Map[BlockID, Block]) {
+case class CFG(entry: BlockID, blocks: Map[BlockID, Block]) {
     def incoming(blockID: BlockID): Set[BlockID] = Set.empty
 
     def outgoing(blockID: BlockID): Set[BlockID] = Set.empty
