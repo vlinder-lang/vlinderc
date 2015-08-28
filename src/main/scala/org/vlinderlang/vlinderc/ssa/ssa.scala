@@ -7,9 +7,9 @@ class BlockID
 class InstID
 
 case class CFG(entry: BlockID, blocks: Map[BlockID, Block]) {
-    def incoming(blockID: BlockID): Set[BlockID] = Set.empty
+  def incoming(blockID: BlockID): Set[BlockID] = Set.empty
 
-    def outgoing(blockID: BlockID): Set[BlockID] = Set.empty
+  def outgoing(blockID: BlockID): Set[BlockID] = Set.empty
 }
 
 case class Block(insts: ListMap[InstID, Inst])
