@@ -46,7 +46,7 @@ private[parse] object Parser extends Parsers {
     for {
       _ <- Sub
       name <- identifier
-      params <- LeftParen ~> param.* <~ RightParen ^^ (_.toVector)
+      params <- LeftParen ~> repsep(param, Comma) <~ RightParen ^^ (_.toVector)
       _ <- Colon
       returnType <- typeExpr
       body <- blockExpr

@@ -90,10 +90,10 @@ package object name {
         resolveTypeExpr(returnTypeExpr)
         val symbol = MemberValueSymbol(context.module, name)
         val result = context.copy(scope = context.scope.add(name, symbol))
-        val bodyScope = valueParams.foldLeft(context.scope.derive) { (scope, param) =>
+        val bodyScope = valueParams.foldLeft(result.scope.derive) { (scope, param) =>
           scope.add(param._1, ValueParamSymbol(param._1))
         }
-        resolveExpr(body)(result.copy(scope = result.scope.derive))
+        resolveExpr(body)(result.copy(scope = bodyScope))
         result
     }
 
