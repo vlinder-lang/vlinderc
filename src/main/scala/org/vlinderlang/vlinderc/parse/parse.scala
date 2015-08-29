@@ -87,7 +87,6 @@ private[parse] object Parser extends Parsers {
       value <- expr
     } yield (name, value)
     for {
-      _ <- Mk
       struct <- typeExpr
       fields <- LeftBrace ~> field.* <~ RightBrace ^^ (_.toVector)
     } yield StructLiteralExpr(struct, fields)
