@@ -6,6 +6,8 @@ import org.vlinderlang.vlinderc.name.MemberValueSymbol
 import org.scalatest.FlatSpec
 
 class packageSpec extends FlatSpec {
+  private implicit val canSetSymbol = CanSetSymbol
+
   "equal" should "compare two types for equality" in {
     implicit val context = Context(
       Map(
