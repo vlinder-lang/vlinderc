@@ -5,6 +5,8 @@ package object `type` {
   import org.vlinderlang.vlinderc.ModuleName
   import org.vlinderlang.vlinderc.name.MemberValueSymbol
 
+  private implicit val canSetType = CanSetType
+
   case class TypeError(reason: String) extends Exception(reason)
 
   object TypeError {

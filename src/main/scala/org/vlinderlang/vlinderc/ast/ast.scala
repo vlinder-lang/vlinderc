@@ -3,6 +3,8 @@ package org.vlinderlang.vlinderc.ast
 import org.vlinderlang.vlinderc.ModuleName
 import org.vlinderlang.vlinderc.name.Symbol
 
+object CanSetType
+
 case class Module(name: ModuleName, decls: Vector[Decl])
 
 sealed abstract class Name
@@ -17,7 +19,10 @@ case class AliasDecl(name: String, underlyingType: TypeExpr) extends Decl
 case class SubDecl(name: String, valueParameters: Vector[(String, TypeExpr)], returnType: TypeExpr, body: Expr) extends Decl
 
 sealed abstract class Expr {
-  var `type`: org.vlinderlang.vlinderc.`type`.Type = null
+  import org.vlinderlang.vlinderc.`type`.Type
+  private var t: Type = null
+  def type_=(`type`: Type)(implicit cst: CanSetType.type): Unit = t = `type`
+  def `type`: Type = t
 }
 case class NameExpr(name: Name) extends Expr {
   var symbol: Symbol = null
