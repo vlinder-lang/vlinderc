@@ -11,11 +11,14 @@ case class Identifier(name: String) extends Token
 case object Import extends Token
 case object Mk extends Token
 case object Sub extends Token
+case object Typealias extends Token
 
 case class StringLiteral(value: String) extends Token
 
 case object Colon extends Token
 case object Comma extends Token
+case object Eq extends Token
+case object EqGT extends Token
 case object LeftBrace extends Token
 case object LeftParen extends Token
 private[parse] case object Newline extends Token
@@ -37,18 +40,22 @@ private[parse] object Lexer extends Parsers with RegexParsers {
   def keyword: Parser[Token] = Vector(
     "import" ^^^ Import,
     "mk" ^^^ Mk,
-    "sub" ^^^ Sub
+    "sub" ^^^ Sub,
+    "typealias" ^^^ Typealias
   ).reduce(_ ||| _)
 
   def literal: Parser[Token] = Vector(
-    """".*?"""".r ^^ { s => StringLiteral(s.substring(1, s.length - 1)) }
+    "\".*?\"".r ^^ { s => StringLiteral(s.substring(1, s.length - 1)) }
   ).reduce(_ ||| _)
 
   def punctuation: Parser[Token] = Vector(
     ":" ^^^ Colon,
     "," ^^^ Comma,
+    "=" ^^^ Eq,
+    "=>" ^^^ EqGT,
     "{" ^^^ LeftBrace,
     "(" ^^^ LeftParen,
+    "\r\n" ^^^ Newline,
     "\n" ^^^ Newline,
     "." ^^^ Period,
     "}" ^^^ RightBrace,

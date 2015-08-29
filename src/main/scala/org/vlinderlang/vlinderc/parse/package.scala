@@ -28,6 +28,7 @@ package object parse {
     case Import => true
     case RightBrace => true
     case Sub => true
+    case Typealias => true
     case _: Identifier => true
     case _: StringLiteral => true
     case _ => false

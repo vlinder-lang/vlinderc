@@ -19,9 +19,18 @@ private[parse] object Parser extends Parsers {
   ).reduce(_ | _)
 
   def decl: Parser[Decl] = Vector(
+    aliasDecl,
     importDecl,
     subDecl
   ).reduce(_ | _)
+
+  def aliasDecl: Parser[Decl] = for {
+    _ <- Typealias
+    name <- identifier
+    _ <- Eq
+    underlyingType <- typeExpr
+    _ <- Semicolon
+  } yield AliasDecl(name, underlyingType)
 
   def importDecl: Parser[Decl] = {
     def moduleName = rep1sep(identifier, Period) ^^ (ModuleName(_: _*))
@@ -86,6 +95,7 @@ private[parse] object Parser extends Parsers {
 
   def typeExpr: Parser[TypeExpr] = Vector(
     nameTypeExpr,
+    subTypeExpr,
     tupleTypeExpr
   ).reduce(_ | _)
 
@@ -94,6 +104,12 @@ private[parse] object Parser extends Parsers {
 
   def tupleTypeExpr: Parser[TypeExpr] =
     LeftParen ~> repsep(typeExpr, Comma) <~ RightParen ^^ (TupleTypeExpr(_: _*))
+
+  def subTypeExpr: Parser[TypeExpr] = for {
+    paramTypes <- LeftParen ~> repsep(typeExpr, Comma) <~ RightParen ^^ (_.toVector)
+    _ <- EqGT
+    returnType <- typeExpr
+  } yield SubTypeExpr(paramTypes, returnType)
 
   def module(name: ModuleName): Parser[Module] =
     decl.* ^^ { decls => Module(name, decls.toVector) }
