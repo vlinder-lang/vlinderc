@@ -9,7 +9,7 @@ object TCO extends Optimization {
   override def breaking = false
 
   override def apply(cfg: CFG): CFG =
-    cfg.copy(blocks = cfg.blocks mapValues optimizeBlock)
+    cfg.copy(blocks = cfg.blocks.par.mapValues(optimizeBlock).seq.toMap)
 
   private def optimizeBlock(block: Block): Block =
     block.copy(insts = ListMap(optimizeInsts(block.insts.toList): _*))
