@@ -4,8 +4,22 @@ import org.vlinderlang.vlinderc.ModuleName
 import org.vlinderlang.vlinderc.`type`.Type
 import scala.collection.immutable.ListMap
 
-class BlockID
-class InstID
+sealed abstract class ID(prefix: String) {
+  private val id = ID.nextID()
+  override def toString = s"$prefix$id"
+}
+
+object ID {
+  private var lastID = 0
+
+  private def nextID(): Int = synchronized {
+    lastID += 1
+    lastID
+  }
+}
+
+class BlockID extends ID("B")
+class InstID extends ID("I")
 
 case class CFG(entry: BlockID, blocks: Map[BlockID, Block]) {
   def incoming(blockID: BlockID): Set[BlockID] = Set.empty
