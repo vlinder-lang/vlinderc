@@ -16,7 +16,7 @@ case class CFG(entry: BlockID, blocks: Map[BlockID, Block]) {
 case class Block(insts: ListMap[InstID, Inst])
 
 sealed abstract class Inst
-case class CallInst(callee: InstID, arguments: Vector[InstID]) extends Inst
+case class CallInst(callee: InstID, arguments: Vector[InstID], tailcall: Boolean) extends Inst
 case class LdargInst(index: Int) extends Inst
 case class LdgblInst(module: ModuleName, member: String) extends Inst
 case class LdstrInst(value: String) extends Inst

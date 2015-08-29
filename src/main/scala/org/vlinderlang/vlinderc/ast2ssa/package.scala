@@ -40,7 +40,7 @@ package object ast2ssa {
       case CallExpr(callee, arguments) =>
         val calleeID = convertExpr(callee)
         val argumentIDs = arguments map convertExpr
-        b.inst(CallInst(calleeID, argumentIDs))
+        b.inst(CallInst(calleeID, argumentIDs, tailcall = false))
 
       case StringLiteralExpr(value) =>
         b.inst(LdstrInst(value))
