@@ -24,22 +24,30 @@ package object `type` {
 
     def isValueNotType: TypeError =
       TypeError(s"this is a value, not a type")
+
+    def isModuleNotValue: TypeError =
+      TypeError(s"this is a module, not a value")
+
+    def isTypeNotValue: TypeError =
+      TypeError(s"this is a type, not a value")
   }
 
   /**
    * @param typeDecls contains type declarations
    * @param globalTypes contains types of global subroutines
+   * @param paramTypes contains types of parameters
    */
   case class Context(
     typeDecls: Map[(ModuleName, String), TypeDecl],
-    globalTypes: Map[(ModuleName, String), Type]
+    globalTypes: Map[(ModuleName, String), Type],
+    paramTypes: Map[String, Type]
   )
 
   /**
    * Adds types to all expressions.
    */
   def analyze(modules: Vector[Module]): Unit = {
-    implicit var context = Context(Map(), Map())
+    implicit var context = Context(Map(), Map(), Map())
     context = populateTypeDecls(modules)
     context = populateGlobalTypes(modules)
   }
@@ -90,8 +98,13 @@ package object `type` {
   def analyze(expr: Expr)(implicit context: Context): Unit = expr match {
     case e @ NameExpr(_) =>
       e.symbol match {
+        case _: ImportSymbol => throw TypeError.isModuleNotValue
+        case _: MemberTypeSymbol => throw TypeError.isTypeNotValue
         case MemberValueSymbol(module, name) =>
           e.`type` = context.globalTypes((module, name))
+        case ValueParamSymbol(name) =>
+          e.`type` = context.paramTypes(name)
+        case StringTypeSymbol => throw TypeError.isTypeNotValue
       }
     case BlockExpr() =>
       expr.`type` = TupleType()

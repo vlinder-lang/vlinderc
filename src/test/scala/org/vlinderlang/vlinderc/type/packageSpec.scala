@@ -15,6 +15,7 @@ class packageSpec extends FlatSpec {
         (ModuleName("vlinder", "log"), "Level") -> UnionTypeDecl("Level", Vector()),
         (ModuleName("vlinder", "log"), "Logger") -> AliasTypeDecl("Logger", TupleType())
       ),
+      Map(),
       Map()
     )
 
@@ -43,21 +44,21 @@ class packageSpec extends FlatSpec {
   }
 
   "analyze" should "succeed for empty block exprs" in {
-    implicit val context = Context(Map(), Map())
+    implicit val context = Context(Map(), Map(), Map())
     val expr = BlockExpr()
     analyze(expr)
     assert(expr.`type` equal TupleType())
   }
 
   it should "succeed when all but the last expr in a block exprs are not of type ()" in {
-    implicit val context = Context(Map(), Map())
+    implicit val context = Context(Map(), Map(), Map())
     val expr = BlockExpr(BlockExpr(), BlockExpr(), StringLiteralExpr("ok"))
     analyze(expr)
     assert(expr.`type` equal StringType)
   }
 
   it should "fail when any but the last expr in a block exprs is not of type ()" in {
-    implicit val context = Context(Map(), Map())
+    implicit val context = Context(Map(), Map(), Map())
     intercept[TypeError] {
       analyze(BlockExpr(StringLiteralExpr("bad"), StringLiteralExpr("ok")))
     }
@@ -68,7 +69,8 @@ class packageSpec extends FlatSpec {
       Map(),
       Map(
         (ModuleName("vlinder", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
-      )
+      ),
+      Map()
     )
     val callee = NameExpr(QualifiedName("debug", "trace"))
     callee.symbol = MemberValueSymbol(ModuleName("vlinder", "debug"), "trace")
@@ -82,7 +84,8 @@ class packageSpec extends FlatSpec {
       Map(),
       Map(
         (ModuleName("vlinder", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
-      )
+      ),
+      Map()
     )
     val callee = NameExpr(QualifiedName("debug", "trace"))
     callee.symbol = MemberValueSymbol(ModuleName("vlinder", "debug"), "trace")
@@ -97,7 +100,8 @@ class packageSpec extends FlatSpec {
       Map(),
       Map(
         (ModuleName("vlinder", "debug"), "trace") -> SubType(Vector(StringType), TupleType())
-      )
+      ),
+      Map()
     )
     val callee = NameExpr(QualifiedName("debug", "trace"))
     callee.symbol = MemberValueSymbol(ModuleName("vlinder", "debug"), "trace")
@@ -108,7 +112,7 @@ class packageSpec extends FlatSpec {
   }
 
   it should "fail when calling non-subroutines" in {
-    implicit val context = Context(Map(), Map())
+    implicit val context = Context(Map(), Map(), Map())
     intercept[TypeError] {
       analyze(CallExpr(BlockExpr(), Vector(StringLiteralExpr("ok"))))
     }
@@ -126,7 +130,8 @@ class packageSpec extends FlatSpec {
             ForallVariableType(forallParameter)
           )
         )
-      )
+      ),
+      Map()
     )
     val callee = NameExpr(QualifiedName("func", "id"))
     callee.symbol = MemberValueSymbol(ModuleName("vlinder", "func"), "id")
@@ -150,7 +155,8 @@ class packageSpec extends FlatSpec {
             ForallVariableType(forallParameter)
           )
         )
-      )
+      ),
+      Map()
     )
     val callee = NameExpr(QualifiedName("text", "cat"))
     callee.symbol = MemberValueSymbol(ModuleName("vlinder", "text"), "cat")
@@ -161,19 +167,19 @@ class packageSpec extends FlatSpec {
   }
 
   "unify" should "succeed for equal types" in {
-    implicit val context = Context(Map(), Map())
+    implicit val context = Context(Map(), Map(), Map())
     unify(StringType, StringType)
   }
 
   it should "unify concrete types with variable types" in {
-    implicit val context = Context(Map(), Map())
+    implicit val context = Context(Map(), Map(), Map())
     val variableType = VariableType()
     unify(variableType, StringType)
     assert(variableType equal StringType)
   }
 
   it should "fail for different types" in {
-    implicit val context = Context(Map(), Map())
+    implicit val context = Context(Map(), Map(), Map())
     intercept[TypeError] {
       unify(StringType, TupleType())
     }
