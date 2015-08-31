@@ -3,7 +3,7 @@ package org.vlinderlang.vlinderc
 package object `type` {
   import org.vlinderlang.vlinderc.ast._
   import org.vlinderlang.vlinderc.ModuleName
-  import org.vlinderlang.vlinderc.name.MemberValueSymbol
+  import org.vlinderlang.vlinderc.name._
 
   private implicit val canSetType = CanSetType
 
@@ -18,6 +18,12 @@ package object `type` {
 
     def badStructFieldNames(expected: Set[String], actual: Set[String]): TypeError =
       TypeError(s"expected fields {${expected.mkString(", ")}} but got {${actual.mkString(", ")}}")
+
+    def isModuleNotType: TypeError =
+      TypeError(s"this is a module, not a type")
+
+    def isValueNotType: TypeError =
+      TypeError(s"this is a value, not a type")
   }
 
   /**
@@ -204,8 +210,14 @@ package object `type` {
    * Turns a type expression into a type.
    */
   def typeExprToType(typeExpr: TypeExpr): Type = typeExpr match {
-    case NameTypeExpr(name) =>
-      ???
+    case e: NameTypeExpr =>
+      e.symbol match {
+        case _: ImportSymbol => throw TypeError.isModuleNotType
+        case MemberTypeSymbol(module, member) => NamedType((module, member))
+        case _: MemberValueSymbol => throw TypeError.isValueNotType
+        case _: ValueParamSymbol => throw TypeError.isValueNotType
+        case StringTypeSymbol => StringType
+      }
     case TupleTypeExpr(elementTypeExprs @ _*) =>
       TupleType(elementTypeExprs map typeExprToType: _*)
     case SubTypeExpr(parameterTypeExprs, returnTypeExpr) =>
