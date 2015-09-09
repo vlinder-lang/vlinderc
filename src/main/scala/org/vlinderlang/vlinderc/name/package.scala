@@ -71,12 +71,21 @@ package object name {
         context.copy(scope = context.scope.add(name, symbol))
 
       case UnionDecl(name, constructors) =>
-        for ((_, paramTypeExprs) <- constructors;
-             paramTypeExpr <- paramTypeExprs) {
-          resolveTypeExpr(paramTypeExpr)
-        }
+        var newScope = context.scope
+
         val symbol = MemberTypeSymbol(context.module, name)
-        context.copy(scope = context.scope.add(name, symbol))
+        newScope = newScope.add(name, symbol)
+
+        for ((constructorName, paramTypeExprs) <- constructors) {
+          newScope = newScope.add(constructorName, MemberValueSymbol(context.module, constructorName))
+          for (paramTypeExpr <- paramTypeExprs) {
+            resolveTypeExpr(paramTypeExpr)
+          }
+        }
+
+        println(newScope)
+
+        context.copy(scope = newScope)
 
       case AliasDecl(name, typeExpr) =>
         resolveTypeExpr(typeExpr)
@@ -147,15 +156,19 @@ package object name {
       module <- modules
       decl <- module.decls
     } yield decl match {
-      case _: ImportDecl => None
+      case _: ImportDecl => Vector()
       case StructDecl(name, _) =>
-        Some((module.name, name) -> MemberTypeSymbol(module.name, name))
-      case UnionDecl(name, _) =>
-        Some((module.name, name) -> MemberTypeSymbol(module.name, name))
+        Vector((module.name, name) -> MemberTypeSymbol(module.name, name))
+      case UnionDecl(name, constructors) =>
+        val constructorSymbols = constructors map { c =>
+          (module.name, c._1) -> MemberValueSymbol(module.name, c._1)
+        }
+        val unionSymbol = (module.name, name) -> MemberTypeSymbol(module.name, name)
+        unionSymbol +: constructorSymbols
       case AliasDecl(name, _) =>
-        Some((module.name, name) -> MemberTypeSymbol(module.name, name))
+        Vector((module.name, name) -> MemberTypeSymbol(module.name, name))
       case SubDecl(name, _, _, _) =>
-        Some((module.name, name) -> MemberValueSymbol(module.name, name))
+        Vector((module.name, name) -> MemberValueSymbol(module.name, name))
     }
     globals.flatten.toMap
   }

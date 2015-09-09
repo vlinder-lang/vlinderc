@@ -86,6 +86,10 @@ package object `type` {
           val parameterTypes = valueParameters map { case (_, typeExpr) => typeExprToType(typeExpr) }
           val returnType = typeExprToType(returnTypeExpr)
           Vector((module.name, name) -> SubType(parameterTypes, returnType))
+        case UnionDecl(name, constructors) =>
+          constructors map { case (ctorName, Vector()) =>
+            (module.name, ctorName) -> NamedType(module.name -> name)
+          }
         case _ =>
           Vector()
       }
