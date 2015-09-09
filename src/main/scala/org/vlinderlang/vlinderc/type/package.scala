@@ -50,6 +50,7 @@ package object `type` {
     implicit var context = Context(Map(), Map(), Map())
     context = populateTypeDecls(modules)
     context = populateGlobalTypes(modules)
+    analyzeDecls(modules)
   }
 
   private def populateTypeDecls(modules: Vector[Module])(implicit context: Context): Context = {
@@ -90,6 +91,22 @@ package object `type` {
       }
     } yield globalType
     context.copy(globalTypes = context.globalTypes ++ globalTypes)
+  }
+
+  def analyzeDecls(modules: Vector[Module])(implicit context: Context): Unit = {
+    for (module <- modules;
+         decl <- module.decls) {
+      decl match {
+        case SubDecl(_, valueParams, returnTypeExpr, body) =>
+          val bodyContext = context.copy(
+            paramTypes = valueParams.map{case (n, t) => (n, typeExprToType(t))}.toMap
+          )
+          val returnType = typeExprToType(returnTypeExpr)
+          analyze(body)(bodyContext)
+          unify(body.`type`, returnType)
+        case _ => ()
+      }
+    }
   }
 
   /**
