@@ -6,7 +6,7 @@ import scala.sys.process._
 object dot {
   def renderGraphical(path: File, cfg: CFG): Unit = {
     val stdin = new ByteArrayInputStream(renderDOT(cfg).getBytes("UTF-8"))
-    (Seq("dot", "-Tsvg", s"-o$path") #< stdin).!
+    (Seq("dot", "-Tpng", s"-o$path") #< stdin).!
   }
 
   def renderDOT(cfg: CFG): String = {

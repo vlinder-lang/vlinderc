@@ -14,7 +14,10 @@ object Main {
       val modules = parseModules(moduleSources)
       name.resolve(modules)
       `type`.analyze(modules)
-      println(modules)
+      val cfgs = ast2ssa.convert(modules)
+      for (((moduleName, name), cfg) <- cfgs) {
+        ssa.dot.renderGraphical(new java.io.File("C:\\Users\\elyse\\Desktop\\" + moduleName.segments.mkString(".") + "." + name + ".png"), cfg)
+      }
     }
 
   def usage() = {

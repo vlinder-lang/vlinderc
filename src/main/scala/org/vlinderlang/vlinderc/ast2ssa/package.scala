@@ -7,7 +7,9 @@ package object ast2ssa {
   import org.vlinderlang.vlinderc.ssa._
   import org.vlinderlang.vlinderc.`type`._
 
-  def convert(modules: Set[Module]): Map[(ModuleName, String), CFG] =
+  case class Context(valueParameters: Vector[String])
+
+  def convert(modules: Vector[Module]): Map[(ModuleName, String), CFG] =
     modules.foldLeft(Map.empty[(ModuleName, String), CFG]) { (map, module) =>
       val cfgs = module.decls.collect {
         case sub: SubDecl => (module.name, sub.name) -> convertSub(sub)
@@ -17,16 +19,20 @@ package object ast2ssa {
 
   private def convertSub(sub: SubDecl): CFG = {
     implicit val b = new CFGBuilder
-    convertExpr(sub.body)
+    implicit val c = Context(sub.valueParameters.map(_._1))
+    val result = convertExpr(sub.body)
+    b.inst(RetInst(result))
     b.result
   }
 
-  private def convertExpr(expr: Expr)(implicit b: CFGBuilder): InstID =
+  private def convertExpr(expr: Expr)(implicit b: CFGBuilder, c: Context): InstID =
     expr match {
       case e: NameExpr =>
         e.symbol match {
           case MemberValueSymbol(module, member) =>
             b.inst(LdgblInst(module, member))
+          case ValueParamSymbol(name) =>
+            b.inst(LdargInst(c.valueParameters.indexOf(name)))
         }
 
       case BlockExpr() =>
