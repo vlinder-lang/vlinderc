@@ -12,6 +12,8 @@ object Main {
       val inputDirs :+ outputDir = args.toSeq.map(new File(_))
       val moduleSources = readSources(inputDirs.toSet)
       val modules = parseModules(moduleSources)
+      name.resolve(modules)
+      `type`.analyze(modules)
       println(modules)
     }
 
