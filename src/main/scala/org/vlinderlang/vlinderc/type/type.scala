@@ -63,7 +63,7 @@ sealed abstract class Type {
    */
   def descriptor: String = this match {
     case VariableType(id) =>
-      s"V$id"
+      s"?$id"
     case StringType =>
       "S"
     case TupleType(elementTypes @ _*) =>
@@ -83,7 +83,7 @@ sealed abstract class Type {
    */
   def format(implicit context: Context): String = prune match {
     case VariableType(id) =>
-      s"__v$id"
+      s"?$id"
     case StringType =>
       "vlinder.text.String"
     case TupleType(elementTypes @ _*) =>

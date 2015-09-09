@@ -21,7 +21,9 @@ private[parse] object Parser extends Parsers {
   def decl: Parser[Decl] = Vector(
     aliasDecl,
     importDecl,
-    subDecl
+    structDecl,
+    subDecl,
+    unionDecl
   ).reduce(_ | _)
 
   def aliasDecl: Parser[Decl] = for {
@@ -36,6 +38,20 @@ private[parse] object Parser extends Parsers {
     def moduleName = rep1sep(identifier, Period) ^^ (ModuleName(_: _*))
     Import ~> moduleName <~ Semicolon ^^ ImportDecl
   }
+
+  def structDecl: Parser[Decl] = for {
+    _ <- Struct
+    name <- identifier
+    _ <- LeftBrace
+    fields <- (for {
+      n <- identifier
+      _ <- Colon
+      t <- typeExpr
+      _ <- Semicolon
+    } yield (n, t)).* ^^ (_.toVector)
+    _ <- RightBrace
+    _ <- Semicolon
+  } yield StructDecl(name, fields)
 
   def subDecl: Parser[Decl] = {
     def param: Parser[(String, TypeExpr)] = for {
@@ -54,6 +70,15 @@ private[parse] object Parser extends Parsers {
     } yield SubDecl(name, params, returnType, body)
   }
 
+  def unionDecl: Parser[Decl] = for {
+    _ <- Union
+    name <- identifier
+    _ <- LeftBrace
+    constructors <- (identifier <~ Semicolon ^^ { i => (i, Vector()) }).* ^^ (_.toVector)
+    _ <- RightBrace
+    _ <- Semicolon
+  } yield UnionDecl(name, constructors)
+
   def expr: Parser[Expr] = callExpr
 
   def callExpr: Parser[Expr] = {
@@ -65,10 +90,10 @@ private[parse] object Parser extends Parsers {
   }
 
   def primaryExpr: Parser[Expr] = Vector(
+    structLiteralExpr,
     nameExpr,
     blockExpr,
-    stringLiteralExpr,
-    structLiteralExpr
+    stringLiteralExpr
   ).reduce(_ | _)
 
   def nameExpr: Parser[Expr] =
@@ -88,7 +113,7 @@ private[parse] object Parser extends Parsers {
     } yield (name, value)
     for {
       struct <- typeExpr
-      fields <- LeftBrace ~> field.* <~ RightBrace ^^ (_.toVector)
+      fields <- LeftBrace ~> repsep(field, Comma) <~ RightBrace ^^ (_.toVector)
     } yield StructLiteralExpr(struct, fields)
   }
 

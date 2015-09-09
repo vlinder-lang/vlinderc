@@ -27,7 +27,9 @@ package object parse {
     case LeftParen => true
     case Import => true
     case RightBrace => true
+    case Struct => true
     case Sub => true
+    case Union => true
     case Typealias => true
     case _: Identifier => true
     case _: StringLiteral => true
