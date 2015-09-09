@@ -83,8 +83,6 @@ package object name {
           }
         }
 
-        println(newScope)
-
         context.copy(scope = newScope)
 
       case AliasDecl(name, typeExpr) =>
