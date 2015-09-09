@@ -31,7 +31,7 @@ object Main {
       val filename = sourceFile.toString.substring(inputDir.toString.size + 1)
       val moduleName = {
         var n = filename.replace('/', '.').replace('\\', '.')
-        n = n.substring(0, n.size - 3)
+        n = n.substring(0, n.size - ".vl".size)
         ModuleName(n.split("\\."): _*)
       }
       val s = io.Source.fromFile(sourceFile)
