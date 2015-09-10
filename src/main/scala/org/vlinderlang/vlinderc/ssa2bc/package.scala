@@ -51,7 +51,7 @@ package object ssa2bc {
         insts :+= NewInst(type_.descriptor)
         insts :+= StlocInst(newLocal(id))
 
-      case (id, ssa.RetInst(value)) =>
+      case (_, ssa.RetInst(value)) =>
         insts :+= LdlocInst(locals(value))
         insts :+= RetInst
 
