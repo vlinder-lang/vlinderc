@@ -18,7 +18,7 @@ object Main {
       for (((moduleName, name), cfg) <- cfgs) {
         ssa.dot.renderGraphical(new java.io.File("C:\\Users\\elyse\\Desktop\\" + moduleName.segments.mkString(".") + "." + name + ".png"), cfg)
       }
-      cfgs foreach { case (_, cfg) => println(ssa2bc.convertCFG(cfg)) }
+      modules foreach { module => println(module2yaml.convert(module)) }
     }
 
   def usage() = {

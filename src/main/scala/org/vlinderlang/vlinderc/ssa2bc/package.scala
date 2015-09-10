@@ -1,8 +1,6 @@
 package org.vlinderlang.vlinderc
 
 package object ssa2bc {
-  import com.google.gson.{Gson, JsonElement}
-
   sealed abstract class Inst
   case class CallInst(arguments: Int) extends Inst
   case class LdargInst(index: Int) extends Inst
@@ -15,7 +13,7 @@ package object ssa2bc {
   case object RetInst extends Inst
   case class StfldInst(field: String) extends Inst
 
-  def convertCFG(cfg: ssa.CFG): Vector[Inst] = {
+  def convert(cfg: ssa.CFG): Vector[Inst] = {
     var insts = Vector[Inst]()
 
     var locals = Map[ssa.InstID, Int]()
