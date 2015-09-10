@@ -2,16 +2,16 @@ package org.vlinderlang.vlinderc
 
 package object ssa2bc {
   sealed abstract class Inst
-  case class CallInst(arguments: Int) extends Inst
-  case class LdargInst(index: Int) extends Inst
-  case class LdlocInst(index: Int) extends Inst
-  case class LdgblInst(name: String) extends Inst
-  case class LdstrInst(value: String) extends Inst
-  case class NewInst(`type`: String) extends Inst
-  case class StlocInst(index: Int) extends Inst
-  case class TailcallInst(arguments: Int) extends Inst
+  case class CallInst(VLINDERarguments: Int) extends Inst
+  case class LdargInst(VLINDERindex: Int) extends Inst
+  case class LdlocInst(VLINDERindex: Int) extends Inst
+  case class LdgblInst(VLINDERname: String) extends Inst
+  case class LdstrInst(VLINDERvalue: String) extends Inst
+  case class NewInst(VLINDERtype: String) extends Inst
+  case class StlocInst(VLINDERindex: Int) extends Inst
+  case class TailcallInst(VLINDERarguments: Int) extends Inst
   case object RetInst extends Inst
-  case class StfldInst(field: String) extends Inst
+  case class StfldInst(VLINDERfield: String) extends Inst
 
   def convert(cfg: ssa.CFG): Vector[Inst] = {
     var insts = Vector[Inst]()

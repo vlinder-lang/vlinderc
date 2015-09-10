@@ -1,9 +1,12 @@
 package org.vlinderlang.vlinderc
 
 package object module2yaml {
-  import com.google.gson.{GsonBuilder, JsonArray, JsonObject, JsonPrimitive}
+  import com.google.gson.{GsonBuilder, JsonArray, JsonElement, JsonObject, JsonPrimitive}
+  import java.util.Locale
 
-  def convert(module: ast.Module): String = {
+  def convert(module: ast.Module, cfgs: Map[(ModuleName, String), ssa.CFG]): String = {
+    val gson = new GsonBuilder().setPrettyPrinting().create()
+
     val root = new JsonObject()
 
     root.add("name", new JsonPrimitive(module.name.segments.mkString(".")))
@@ -65,6 +68,9 @@ package object module2yaml {
 
         sub.add("localCount", new JsonPrimitive(1024)) // TODO: Actual local count.
 
+        val insts = ssa2bc.convert(cfgs((module.name, name)))
+        sub.add("body", {val a = new JsonArray(); insts.map(convertInst) foreach a.add; a})
+
         subs.add(sub)
     }
     root.add("imports", imports)
@@ -74,7 +80,26 @@ package object module2yaml {
     root.add("subs", subs)
     root.add("foreignSubs", new JsonArray())
 
-    val gson = new GsonBuilder().setPrettyPrinting().create()
     gson.toJson(root)
+  }
+
+  def convertInst(inst: ssa2bc.Inst): JsonElement = {
+    val obj = new JsonObject()
+
+    val opcode = inst.getClass.getSimpleName.toLowerCase(Locale.ENGLISH).replaceAll("inst\\$?$", "")
+    obj.add("opcode", new JsonPrimitive(opcode))
+
+    inst.getClass.getMethods.toVector
+    .filter(_.getName.startsWith("VLINDER"))
+    .foreach{ method =>
+      val name = method.getName.substring("VLINDER".size)
+      val value = method.invoke(inst) match {
+        case v: Integer => new JsonPrimitive(v)
+        case v: String => new JsonPrimitive(v)
+      }
+      obj.add(name, value)
+    }
+
+    return obj
   }
 }
