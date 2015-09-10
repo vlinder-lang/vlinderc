@@ -3,7 +3,7 @@ package org.vlinderlang.vlinderc
 package object ssa2bc {
   sealed abstract class Inst
   case class CallInst(VLINDERarguments: Int) extends Inst
-  case class LdargInst(VLINDERindex: Int) extends Inst
+  case class LdargInst(VLINDERargument: Int) extends Inst
   case class LdlocInst(VLINDERindex: Int) extends Inst
   case class LdgblInst(VLINDERname: String) extends Inst
   case class LdstrInst(VLINDERvalue: String) extends Inst

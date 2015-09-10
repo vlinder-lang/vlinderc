@@ -21,9 +21,7 @@ object Main {
       }
       modules foreach { module =>
         val yaml = module2yaml.convert(module, cfgs)
-        val dir = outputDir + "/" + module.name.segments.init.mkString("/")
-        val path = dir + "/" + module.name.segments.last + ".vlm"
-        new File(dir) { mkdirs() }
+        val path = outputDir + "/" + module.name.segments.mkString(".") + ".vlm"
         NIOFiles.write(Paths.get(path), yaml.getBytes("UTF-8"))
       }
     }

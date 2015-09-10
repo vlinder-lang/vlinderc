@@ -66,6 +66,8 @@ package object module2yaml {
         }
         sub.add("parameters", parameters)
 
+        sub.add("returnType", new JsonPrimitive(`type`.typeExprToType(returnType).descriptor))
+
         sub.add("localCount", new JsonPrimitive(1024)) // TODO: Actual local count.
 
         val insts = ssa2bc.convert(cfgs((module.name, name)))
