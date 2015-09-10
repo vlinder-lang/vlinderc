@@ -2,6 +2,7 @@ package org.vlinderlang.vlinderc
 
 import com.google.common.io.Files
 import java.io.File
+import java.nio.file.{Paths, Files => NIOFiles}
 import scala.io
 
 object Main {
@@ -18,7 +19,13 @@ object Main {
       for (((moduleName, name), cfg) <- cfgs) {
         ssa.dot.renderGraphical(new java.io.File("C:\\Users\\elyse\\Desktop\\" + moduleName.segments.mkString(".") + "." + name + ".png"), cfg)
       }
-      modules foreach { module => println(module2yaml.convert(module, cfgs)) }
+      modules foreach { module =>
+        val yaml = module2yaml.convert(module, cfgs)
+        val dir = outputDir + "/" + module.name.segments.init.mkString("/")
+        val path = dir + "/" + module.name.segments.last + ".vlm"
+        new File(dir) { mkdirs() }
+        NIOFiles.write(Paths.get(path), yaml.getBytes("UTF-8"))
+      }
     }
 
   def usage() = {
