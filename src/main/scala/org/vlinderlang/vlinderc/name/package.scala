@@ -37,6 +37,7 @@ package object name {
     def empty: Scope = Scope(None, Map.empty)
 
     def prelude: Scope = empty.copy(symbols = Map(
+      "__Boolean" -> BooleanTypeSymbol,
       "__String" -> StringTypeSymbol
     ))
   }
@@ -124,6 +125,7 @@ package object name {
       case CallExpr(callee, arguments) =>
         resolveExpr(callee)
         arguments foreach resolveExpr
+      case _: BooleanLiteralExpr =>
       case _: StringLiteralExpr =>
       case StructLiteralExpr(struct, fields) =>
         resolveTypeExpr(struct)

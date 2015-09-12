@@ -48,6 +48,9 @@ package object ast2ssa {
         val argumentIDs = arguments map convertExpr
         b.inst(CallInst(calleeID, argumentIDs, tailcall = false))
 
+      case BooleanLiteralExpr(value) =>
+        b.inst(LdboolInst(value))
+
       case StringLiteralExpr(value) =>
         b.inst(LdstrInst(value))
 

@@ -125,6 +125,7 @@ package object `type` {
           e.`type` = context.globalTypes((module, name))
         case ValueParamSymbol(name) =>
           e.`type` = context.paramTypes(name)
+        case BooleanTypeSymbol => throw TypeError.isTypeNotValue
         case StringTypeSymbol => throw TypeError.isTypeNotValue
       }
     case BlockExpr() =>
@@ -149,6 +150,8 @@ package object `type` {
       val returnType = VariableType()
       unify(calleeType, SubType(argumentTypes, returnType))
       expr.`type` = returnType
+    case BooleanLiteralExpr(_) =>
+      expr.`type` = BooleanType
     case StringLiteralExpr(_) =>
       expr.`type` = StringType
     case StructLiteralExpr(struct, fields) =>
@@ -219,6 +222,8 @@ package object `type` {
   def skolemize(parameters: Set[ForallParameter], `type`: Type): Type = {
     var replaced = Map[ForallParameter, VariableType]()
     def go(`type`: Type): Type = `type` match {
+      case t @ BooleanType =>
+        t
       case t @ StringType =>
         t
       case TupleType(elementTypes @ _*) =>
@@ -250,6 +255,7 @@ package object `type` {
         case MemberTypeSymbol(module, member) => NamedType((module, member))
         case _: MemberValueSymbol => throw TypeError.isValueNotType
         case _: ValueParamSymbol => throw TypeError.isValueNotType
+        case BooleanTypeSymbol => BooleanType
         case StringTypeSymbol => StringType
       }
     case TupleTypeExpr(elementTypeExprs @ _*) =>

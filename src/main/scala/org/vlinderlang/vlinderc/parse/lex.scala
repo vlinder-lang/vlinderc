@@ -8,9 +8,11 @@ private[parse] case object EOF extends Token
 
 case class Identifier(name: String) extends Token
 
+case object False extends Token
 case object Import extends Token
 case object Struct extends Token
 case object Sub extends Token
+case object True extends Token
 case object Typealias extends Token
 case object Union extends Token
 
@@ -39,9 +41,11 @@ private[parse] object Lexer extends Parsers with RegexParsers {
     """[a-zA-Z_][a-zA-Z0-9_]*""".r ^^ Identifier
 
   def keyword: Parser[Token] = Vector(
+    "false" ^^^ False,
     "import" ^^^ Import,
     "struct" ^^^ Struct,
     "sub" ^^^ Sub,
+    "true" ^^^ True,
     "typealias" ^^^ Typealias,
     "union" ^^^ Union
   ).reduce(_ ||| _)

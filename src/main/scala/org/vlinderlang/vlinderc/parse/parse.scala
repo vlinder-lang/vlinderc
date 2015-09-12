@@ -93,6 +93,7 @@ private[parse] object Parser extends Parsers {
     structLiteralExpr,
     nameExpr,
     blockExpr,
+    booleanLiteralExpr,
     stringLiteralExpr
   ).reduce(_ | _)
 
@@ -101,6 +102,9 @@ private[parse] object Parser extends Parsers {
 
   def blockExpr: Parser[Expr] =
     LeftBrace ~> (expr <~ Semicolon).* <~ RightBrace ^^ (BlockExpr(_: _*))
+
+  def booleanLiteralExpr: Parser[Expr] =
+    (True ^^^ true | False ^^^ false) ^^ BooleanLiteralExpr
 
   def stringLiteralExpr: Parser[Expr] =
     stringLiteral ^^ StringLiteralExpr

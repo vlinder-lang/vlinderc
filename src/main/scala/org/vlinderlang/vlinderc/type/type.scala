@@ -18,6 +18,8 @@ sealed abstract class Type {
         case Some(u) => u.prune
         case None => t
       }
+    case t @ BooleanType =>
+      t
     case t @ StringType =>
       t
     case TupleType(elementTypes @ _*) =>
@@ -41,6 +43,8 @@ sealed abstract class Type {
         case Some(u) => u.resolve
         case None => t
       }
+    case t @ BooleanType =>
+      t
     case t @ StringType =>
       t
     case TupleType(elementTypes @ _*) =>
@@ -64,6 +68,8 @@ sealed abstract class Type {
   def descriptor: String = this match {
     case VariableType(id) =>
       s"?$id"
+    case BooleanType =>
+      "B"
     case StringType =>
       "S"
     case TupleType(elementTypes @ _*) =>
@@ -84,8 +90,10 @@ sealed abstract class Type {
   def format(implicit context: Context): String = prune match {
     case VariableType(id) =>
       s"?$id"
+    case BooleanType =>
+      "vlinder.logic.T"
     case StringType =>
-      "vlinder.text.String"
+      "vlinder.text.T"
     case TupleType(elementTypes @ _*) =>
       s"(${elementTypes.map(_.format).mkString(", ")})"
     case SubType(parameterTypes, returnType) =>
@@ -98,6 +106,7 @@ sealed abstract class Type {
       parameter.name
   }
 }
+case object BooleanType extends Type
 case object StringType extends Type
 case class VariableType(id: Int) extends Type {
   var instance: Option[Type] = None

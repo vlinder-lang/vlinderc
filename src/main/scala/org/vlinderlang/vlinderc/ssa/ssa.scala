@@ -33,6 +33,7 @@ sealed abstract class Inst
 case class CallInst(callee: InstID, arguments: Vector[InstID], tailcall: Boolean) extends Inst
 case class LdargInst(index: Int) extends Inst
 case class LdgblInst(module: ModuleName, member: String) extends Inst
+case class LdboolInst(value: Boolean) extends Inst
 case class LdstrInst(value: String) extends Inst
 case class NewInst(`type`: Type) extends Inst
 case class RetInst(value: InstID) extends Inst

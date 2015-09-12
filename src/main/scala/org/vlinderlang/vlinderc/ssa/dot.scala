@@ -17,6 +17,8 @@ object dot {
         s"ldarg $index"
       case LdgblInst(module, member) =>
         s"ldgbl ${module.segments.mkString(".")}.$member"
+      case LdboolInst(value) =>
+        "ldbool " + value
       case LdstrInst(value) =>
         "ldstr \"" + value + "\""
       case NewInst(t) =>

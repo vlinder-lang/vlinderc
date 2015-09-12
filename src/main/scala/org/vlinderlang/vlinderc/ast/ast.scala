@@ -32,6 +32,7 @@ case class NameExpr(name: Name) extends Expr {
 }
 case class BlockExpr(body: Expr*) extends Expr
 case class CallExpr(callee: Expr, arguments: Vector[Expr]) extends Expr
+case class BooleanLiteralExpr(value: Boolean) extends Expr
 case class StringLiteralExpr(value: String) extends Expr
 case class StructLiteralExpr(struct: TypeExpr, fields: Vector[(String, Expr)]) extends Expr
 

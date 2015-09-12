@@ -16,6 +16,8 @@ package object parse {
   private def semicolonAfter(token: Token): Boolean = token match {
     case RightBrace => true
     case RightParen => true
+    case False => true
+    case True => true
     case _: Identifier => true
     case _: StringLiteral => true
     case _ => false
@@ -25,11 +27,13 @@ package object parse {
     case EOF => true
     case LeftBrace => true
     case LeftParen => true
+    case False => true
     case Import => true
     case RightBrace => true
     case Struct => true
     case Sub => true
     case Union => true
+    case True => true
     case Typealias => true
     case _: Identifier => true
     case _: StringLiteral => true
