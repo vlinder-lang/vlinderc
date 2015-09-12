@@ -10,19 +10,20 @@ object Main {
     if (args.size == 0) {
       usage()
     } else {
-      val inputDirs :+ outputDir = args.toSeq.map(new File(_))
-      val moduleSources = readSources(inputDirs.toSet)
-      val modules = parseModules(moduleSources)
-      name.resolve(modules)
-      `type`.analyze(modules)
-      val cfgs = ast2ssa.convert(modules)
-      for (((moduleName, name), cfg) <- cfgs) {
-        ssa.dot.renderGraphical(new java.io.File("C:\\Users\\elyse\\Desktop\\" + moduleName.segments.mkString(".") + "." + name + ".png"), cfg)
-      }
-      modules foreach { module =>
-        val yaml = module2yaml.convert(module, cfgs)
-        val path = outputDir + "/" + module.name.segments.mkString(".") + ".vlm"
-        NIOFiles.write(Paths.get(path), yaml.getBytes("UTF-8"))
+      try {
+        val inputDirs :+ outputDir = args.toSeq.map(new File(_))
+        val moduleSources = readSources(inputDirs.toSet)
+        val modules = parseModules(moduleSources)
+        name.resolve(modules)
+        `type`.analyze(modules)
+        val cfgs = ast2ssa.convert(modules)
+        modules foreach { module =>
+          val yaml = module2yaml.convert(module, cfgs)
+          val path = outputDir + "/" + module.name.segments.mkString(".") + ".vlm"
+          NIOFiles.write(Paths.get(path), yaml.getBytes("UTF-8"))
+        }
+      } catch {
+        case d: Diagnostic => Console.err.println(d.format)
       }
     }
 
@@ -48,6 +49,10 @@ object Main {
     }).toMap
 
   private def sources(directory: File): Set[File] = {
+    if (!directory.exists) {
+      println("cannot find " + directory)
+      sys.exit(1)
+    }
     val (directories, files) = directory.listFiles.toSet.partition(_.isDirectory)
     files.filter{f => Files.getFileExtension(f.toString) == "vl"} ++ directories.flatMap(sources)
   }

@@ -7,7 +7,9 @@ package object `type` {
 
   private implicit val canSetType = CanSetType
 
-  case class TypeError(reason: String) extends Exception(reason)
+  case class TypeError(message: String) extends Exception(message) with Diagnostic {
+    override def kind: DiagnosticKind = Error
+  }
 
   object TypeError {
     def couldNotUnify(a: Type, b: Type)(implicit context: Context): TypeError =

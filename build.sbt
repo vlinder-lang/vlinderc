@@ -12,3 +12,7 @@ libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
+
+test in assembly := {}
+
+mainClass in assembly := Some("org.vlinderlang.vlinderc.Main")
